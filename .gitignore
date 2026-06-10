@@ -1,0 +1,28 @@
+# Environments
+venv/
+env/
+.env
+__pycache__/
+*.pyc
+
+# Database
+*.db
+*.sqlite3
+
+# Node
+node_modules/
+dist/
+.npm/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+
+# Vite
+frontend/dist
+frontend/dist-ssr
+frontend/*.local
+
+# Misc
+.DS_Store
