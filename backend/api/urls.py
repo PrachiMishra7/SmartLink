@@ -8,7 +8,7 @@ import json
 
 from backend.database.database import get_db, SessionLocal
 from backend.database.models import URL, User, ClickLog, ThreatLog
-from backend.schemas.url import URLCreate, URLResponse
+from backend.schemas.url import URLCreate, URLResponse, URLUpdate
 from backend.api.deps import get_current_user, get_current_user_optional
 from backend.core.utils import generate_short_code
 from backend.core.security import get_password_hash, verify_password
@@ -52,11 +52,17 @@ def shorten_url(
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     # Threat Detection Check
-    if is_malicious_url(str(url_in.original_url)):
-        threat_log = ThreatLog(url_attempted=str(url_in.original_url), user_id=current_user.id if current_user else None)
+    threat_result = is_malicious_url(str(url_in.original_url))
+    if threat_result["is_malicious"]:
+        import json
+        threat_log = ThreatLog(
+            url=str(url_in.original_url), 
+            threat_status="Blocked",
+            scan_result=json.dumps({"score": threat_result["score"], "reasons": threat_result["reasons"]})
+        )
         db.add(threat_log)
         db.commit()
-        raise HTTPException(status_code=400, detail="Malicious URL detected. Request blocked by VirusTotal.")
+        raise HTTPException(status_code=400, detail=f"Malicious URL detected by SmartLink Engine (Score: {threat_result['score']}). Reasons: {', '.join(threat_result['reasons'])}")
 
     # Check custom alias uniqueness
     if url_in.custom_alias:
@@ -92,6 +98,31 @@ def shorten_url(
     db.refresh(db_url)
     return db_url
 
+@router.delete("/user/urls/{url_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_url(url_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    db_url = db.query(URL).filter(URL.id == url_id, URL.user_id == current_user.id).first()
+    if not db_url:
+        raise HTTPException(status_code=404, detail="URL not found")
+    
+    db.delete(db_url)
+    db.commit()
+    return None
+
+@router.patch("/user/urls/{url_id}", response_model=URLResponse)
+def update_url(url_id: int, url_update: URLUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    db_url = db.query(URL).filter(URL.id == url_id, URL.user_id == current_user.id).first()
+    if not db_url:
+        raise HTTPException(status_code=404, detail="URL not found")
+    
+    if url_update.is_active is not None:
+        db_url.is_active = url_update.is_active
+    if url_update.notes is not None:
+        db_url.notes = url_update.notes
+        
+    db.commit()
+    db.refresh(db_url)
+    return db_url
+
 @router.get("/user/urls", response_model=list[URLResponse])
 def get_user_urls(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     urls = db.query(URL).filter(URL.user_id == current_user.id).order_by(URL.created_at.desc()).all()
@@ -103,8 +134,8 @@ def redirect_to_url(short_code: str, request: Request, background_tasks: Backgro
         (URL.short_code == short_code) | (URL.custom_alias == short_code)
     ).first()
 
-    if not db_url:
-        raise HTTPException(status_code=404, detail="URL not found")
+    if not db_url or not db_url.is_active:
+        raise HTTPException(status_code=404, detail="URL not found or inactive")
 
     # Expiry Check
     if db_url.expiry_date:
@@ -191,7 +222,7 @@ def get_user_analytics(db: Session = Depends(get_db), current_user: User = Depen
     url_ids = [u.id for u in user_urls]
     
     if not url_ids:
-        return {"total_clicks": 0, "unique_visitors": 0, "devices": [], "browsers": [], "daily_clicks": [0]*7, "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], "geo": []}
+        return {"total_clicks": 0, "unique_visitors": 0, "devices": [], "browsers": [], "daily_clicks": [0]*7, "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], "geo": [], "referrers": []}
         
     total_clicks = sum(u.click_count for u in user_urls)
     unique_visitors = db.query(func.count(func.distinct(ClickLog.ip_address))).filter(ClickLog.url_id.in_(url_ids)).scalar() or 0
@@ -223,6 +254,12 @@ def get_user_analytics(db: Session = Depends(get_db), current_user: User = Depen
         daily_clicks.append(daily_dict.get(date_str, 0))
         days.append(dt.strftime("%a"))
         
+    # Referrers
+    referrers_q = db.query(ClickLog.referrer, func.count(ClickLog.id)).filter(ClickLog.url_id.in_(url_ids), ClickLog.referrer.isnot(None)).group_by(ClickLog.referrer).all()
+    referrers = [{"name": r[0] if r[0] else "Direct", "count": r[1]} for r in referrers_q]
+    if not referrers and total_clicks > 0:
+        referrers = [{"name": "Direct", "count": total_clicks}]
+
     return {
         "total_clicks": total_clicks,
         "unique_visitors": unique_visitors,
@@ -230,7 +267,8 @@ def get_user_analytics(db: Session = Depends(get_db), current_user: User = Depen
         "browsers": browsers,
         "daily_clicks": daily_clicks,
         "days": days,
-        "geo": geo
+        "geo": geo,
+        "referrers": referrers
     }
 
 from pydantic import BaseModel
@@ -239,14 +277,30 @@ class ScanRequest(BaseModel):
 
 @router.post("/threats/scan")
 def scan_url(req: ScanRequest):
-    is_malicious = is_malicious_url(req.url)
-    return {"malicious": is_malicious}
+    return is_malicious_url(req.url)
 
 @router.get("/platform/stats")
 def get_platform_stats(db: Session = Depends(get_db)):
-    total_urls = db.query(URL).count()
-    total_users = db.query(User).count()
-    return {
-        "links_shortened": total_urls,
-        "active_users": total_users
-    }
+    links = db.query(URL).count()
+    users = db.query(User).count()
+    return {"links_shortened": links, "active_users": users}
+
+@router.get("/platform/threats")
+def get_platform_threats(db: Session = Depends(get_db)):
+    logs = db.query(ThreatLog).order_by(ThreatLog.timestamp.desc()).limit(50).all()
+    res = []
+    import json
+    for l in logs:
+        try:
+            scan = json.loads(l.scan_result) if l.scan_result else {}
+        except:
+            scan = {}
+        res.append({
+            "id": l.id,
+            "url": l.url,
+            "status": l.threat_status,
+            "score": scan.get("score", 100),
+            "reasons": scan.get("reasons", []),
+            "timestamp": l.timestamp
+        })
+    return res

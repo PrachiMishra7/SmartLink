@@ -180,7 +180,7 @@ function AuthModal({ mode, close, switchMode, onSuccess }:
 function AnalyticsModal({ close }: { close: () => void }) {
   const [vis, setVis] = useState(false);
   const [data, setData] = useState<any>(null);
-  
+
   useEffect(() => { 
     setTimeout(() => setVis(true), 120); 
     const tok = localStorage.getItem('token');
@@ -204,10 +204,12 @@ function AnalyticsModal({ close }: { close: () => void }) {
   const pathD = pts.map((p: any, i: number) => i === 0 ? `M ${p.x} ${p.y}` : `C ${pts[i-1].x+36} ${pts[i-1].y} ${p.x-36} ${p.y} ${p.x} ${p.y}`).join(' ');
   const fillD = `${pathD} L ${W} ${H} L 0 ${H} Z`;
 
+  const fmt = (n: number) => new Intl.NumberFormat('en-US', { notation: 'compact' }).format(n);
+
   const stats = [
     { label: 'Total Clicks', value: fmt(data.total_clicks || 0), color: '#4ade80', bg: 'rgba(34,197,94,.08)', border: 'rgba(34,197,94,.2)' },
     { label: 'Unique Visitors', value: fmt(data.unique_visitors || 0), color: '#60a5fa', bg: 'rgba(96,165,250,.08)', border: 'rgba(96,165,250,.2)' },
-    { label: 'Top Country', value: data.geo?.[0]?.label || 'N/A', color: '#c084fc', bg: 'rgba(192,132,252,.08)', border: 'rgba(192,132,252,.2)' },
+    { label: 'Top Country', value: data.geo?.[0]?.name || 'N/A', color: '#c084fc', bg: 'rgba(192,132,252,.08)', border: 'rgba(192,132,252,.2)' },
     { label: 'Avg CTR', value: data.total_clicks ? '100%' : '0%', color: '#fbbf24', bg: 'rgba(251,191,36,.08)', border: 'rgba(251,191,36,.2)' },
   ];
   const geo = data.geo || [];
@@ -219,6 +221,9 @@ function AnalyticsModal({ close }: { close: () => void }) {
 
   const browsers = data.browsers || [];
   const browsersTotal = Math.max(1, browsers.reduce((a: number, b: any) => a + b.count, 0));
+
+  const referrers = data.referrers || [];
+  const referrersTotal = Math.max(1, referrers.reduce((a: number, r: any) => a + r.count, 0));
 
   return (
     <Modal close={close} wide>
@@ -275,10 +280,10 @@ function AnalyticsModal({ close }: { close: () => void }) {
             <div style={{ color: '#94a3b8', fontWeight: 700, fontSize: 13, marginBottom: 16 }}>Geographic Distribution</div>
             {geo.length === 0 && <div style={{ color: '#3d5270', fontSize: 12 }}>No geographic data available</div>}
             {geo.map((g: any, i: number) => (
-              <div key={g.label} style={{ marginBottom: 14 }}>
+              <div key={g.name} style={{ marginBottom: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 12 }}>
                   <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: colors[i%colors.length], display: 'inline-block' }} />{g.label}
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: colors[i%colors.length], display: 'inline-block' }} />{g.name}
                   </span>
                   <span style={{ color: 'white', fontWeight: 700 }}>{Math.round((g.count/geoTotal)*100)}%</span>
                 </div>
@@ -294,22 +299,40 @@ function AnalyticsModal({ close }: { close: () => void }) {
             {devs.length === 0 && <div style={{ color: '#3d5270', fontSize: 12, marginBottom: 18 }}>No device data</div>}
             <div style={{ display: 'flex', gap: 10, marginBottom: 18, overflowX: 'auto' }}>
               {devs.map((d: any) => (
-                <div key={d.label} style={{ flex: 1, minWidth: 60, background: 'rgba(8,14,26,.8)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 11, color: '#3d5270', marginBottom: 4 }}>{d.label}</div>
+                <div key={d.name} style={{ flex: 1, minWidth: 60, background: 'rgba(8,14,26,.8)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 11, color: '#3d5270', marginBottom: 4 }}>{d.name}</div>
                   <div style={{ fontSize: 16, fontWeight: 800, color: 'white' }}>{Math.round((d.count/devsTotal)*100)}%</div>
                 </div>
               ))}
             </div>
-            <div style={{ color: '#94a3b8', fontWeight: 700, fontSize: 13, marginBottom: 12 }}>Top Browsers</div>
-            {browsers.length === 0 && <div style={{ color: '#3d5270', fontSize: 12 }}>No browser data</div>}
-            {browsers.map((b: any) => (
-              <div key={b.label} style={{ marginBottom: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
-                  <span style={{ color: '#94a3b8' }}>{b.label}</span><span style={{ color: 'white', fontWeight: 700 }}>{Math.round((b.count/browsersTotal)*100)}%</span>
-                </div>
-                <div className="pbar"><div className="pbar-fill" style={{ width: vis ? `${(b.count/browsersTotal)*100}%` : '0%' }} /></div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <div style={{ color: '#94a3b8', fontWeight: 700, fontSize: 13, marginBottom: 12 }}>Top Browsers</div>
+                {browsers.length === 0 && <div style={{ color: '#3d5270', fontSize: 12 }}>No browser data</div>}
+                {browsers.map((b: any) => (
+                  <div key={b.name} style={{ marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
+                      <span style={{ color: '#94a3b8' }}>{b.name}</span><span style={{ color: 'white', fontWeight: 700 }}>{Math.round((b.count/browsersTotal)*100)}%</span>
+                    </div>
+                    <div className="pbar"><div className="pbar-fill" style={{ width: vis ? `${(b.count/browsersTotal)*100}%` : '0%' }} /></div>
+                  </div>
+                ))}
               </div>
-            ))}
+              
+              <div>
+                <div style={{ color: '#94a3b8', fontWeight: 700, fontSize: 13, marginBottom: 12 }}>Top Referrers</div>
+                {referrers.length === 0 && <div style={{ color: '#3d5270', fontSize: 12 }}>No referrer data</div>}
+                {referrers.map((r: any) => (
+                  <div key={r.name} style={{ marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
+                      <span style={{ color: '#94a3b8', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: 80 }}>{r.name}</span><span style={{ color: 'white', fontWeight: 700 }}>{Math.round((r.count/referrersTotal)*100)}%</span>
+                    </div>
+                    <div className="pbar"><div className="pbar-fill" style={{ width: vis ? `${(r.count/referrersTotal)*100}%` : '0%' }} /></div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -321,77 +344,65 @@ function AnalyticsModal({ close }: { close: () => void }) {
    THREAT MODAL
 ────────────────────────────────────────────────────────────── */
 function ThreatModal({ close }: { close: () => void }) {
-  const [url, setUrl] = useState('');
-  const [status, setStatus] = useState<'idle' | 'scanning' | 'safe' | 'malicious' | 'error'>('idle');
+  const [threats, setThreats] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const scan = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!url.trim()) return;
-    setStatus('scanning');
-    try {
-      const r = await fetch(`${API_URL}/api/threats/scan`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url })
-      });
-      if (!r.ok) throw new Error('Scan failed');
-      const d = await r.json();
-      setStatus(d.malicious ? 'malicious' : 'safe');
-    } catch {
-      setStatus('error');
-    }
-  };
+  useEffect(() => {
+    fetch(`${API_URL}/api/urls/platform/threats`)
+      .then(r => r.json())
+      .then(d => { setThreats(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
 
   return (
-    <Modal close={close}>
-      <div style={{ padding: '36px 32px 32px', textAlign: 'center' }}>
-        <div style={{
-          width: 72, height: 72, borderRadius: 20, margin: '0 auto 20px',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: status === 'safe' ? 'rgba(34,197,94,.1)' : status === 'malicious' ? 'rgba(239,68,68,.1)' : 'rgba(255,255,255,.05)',
-          border: `1px solid ${status === 'safe' ? 'rgba(34,197,94,.35)' : status === 'malicious' ? 'rgba(239,68,68,.35)' : 'rgba(255,255,255,.1)'}`,
-          color: status === 'safe' ? '#22c55e' : status === 'malicious' ? '#ef4444' : '#94a3b8',
-          transition: 'all .6s',
-          boxShadow: status === 'safe' ? '0 0 40px rgba(34,197,94,.2)' : status === 'malicious' ? '0 0 40px rgba(239,68,68,.2)' : 'none',
-        }}>
-          {status === 'scanning' ? (
-            <svg width={30} height={30} fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24" style={{ animation: 'spin 1s linear infinite' }}>
-              <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          ) : status === 'safe' ? (
-            <Svg d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" size={34} />
-          ) : status === 'malicious' ? (
-            <Svg d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" size={34} />
-          ) : (
-             <Svg d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" size={30} />
-          )}
-        </div>
-        
-        <div style={{ color: 'white', fontWeight: 800, fontSize: 20, marginBottom: 8 }}>
-          {status === 'safe' ? '✅ Safe URL!' : status === 'malicious' ? '⚠️ Malicious URL Detected' : status === 'scanning' ? 'Scanning with VirusTotal...' : 'Threat Scanner'}
-        </div>
-        
-        <div style={{ color: '#3d5270', fontSize: 13, lineHeight: 1.7, marginBottom: 24, padding: '0 16px' }}>
-          {status === 'safe'
-            ? 'No threats detected. This URL is safe to shorten.'
-            : status === 'malicious'
-            ? 'Warning! This URL has been flagged by VirusTotal as malicious (phishing, malware, or spam). SmartLink will block it.'
-            : status === 'scanning'
-            ? 'Checking your URL against 90+ global threat databases in real time...'
-            : 'Enter a URL to scan it against 90+ global threat databases before shortening.'}
+    <Modal close={close} wide>
+      <div style={{ padding: '36px 32px 32px', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 28 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 13, background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
+            <Svg d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" size={22} />
+          </div>
+          <div>
+            <div style={{ color: 'white', fontWeight: 800, fontSize: 20 }}>Threat Intelligence</div>
+            <div style={{ color: '#3d5270', fontSize: 12, marginTop: 2 }}>Live feed of URLs intercepted by the Heuristic Engine</div>
+          </div>
         </div>
 
-        {status === 'idle' || status === 'error' ? (
-          <form onSubmit={scan} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <input type="url" placeholder="https://example.com" value={url} onChange={e => setUrl(e.target.value)} required
-              style={{ background: 'rgba(8,14,26,.8)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'border-color .2s', fontFamily: 'Inter,sans-serif', width: '100%' }}
-              onFocus={e => (e.target.style.borderColor = 'rgba(96,165,250,.5)')}
-              onBlur={e => (e.target.style.borderColor = '#1a2e46')} />
-            {status === 'error' && <div style={{ color: '#f87171', fontSize: 12 }}>Scan failed. Please try again.</div>}
-            <button type="submit" className="btn-primary" style={{ width: '100%', background: '#3b82f6', color: 'white', border: 'none' }}>Scan URL</button>
-          </form>
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center' }}><Spinner /></div>
+        ) : threats.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <div style={{ width: 56, height: 56, borderRadius: 18, background: 'rgba(34,197,94,.08)', color: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+              <Svg d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" size={26} />
+            </div>
+            <div style={{ color: '#64748b', fontWeight: 600, marginBottom: 6 }}>All clear</div>
+            <div style={{ color: '#253850', fontSize: 13 }}>No malicious links have been intercepted yet.</div>
+          </div>
         ) : (
-          <button onClick={() => { setStatus('idle'); setUrl(''); }} className="btn-outline" style={{ width: '100%', marginTop: 10 }}>Scan Another URL</button>
+          <div style={{ display: 'grid', gap: 12 }}>
+            {threats.map(t => (
+              <div key={t.id} style={{ background: 'rgba(8,14,26,.6)', border: '1px solid #1a2e46', borderRadius: 12, padding: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                  <div style={{ color: '#ef4444', fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444', display: 'inline-block', animation: 'pulse 2s infinite' }} />
+                    Threat Score: {t.score}/100
+                  </div>
+                  <div style={{ color: '#64748b', fontSize: 11 }}>{new Date(t.timestamp).toLocaleString()}</div>
+                </div>
+                <div style={{ color: 'white', fontSize: 13, wordBreak: 'break-all', marginBottom: 10, fontFamily: 'monospace', background: 'rgba(239,68,68,.05)', padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(239,68,68,.1)' }}>
+                  {t.url}
+                </div>
+                {t.reasons && t.reasons.length > 0 && (
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {t.reasons.map((r: string, i: number) => (
+                      <span key={i} style={{ fontSize: 10, background: 'rgba(251,191,36,.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,.2)', padding: '2px 8px', borderRadius: 4 }}>
+                        {r}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </Modal>
@@ -402,7 +413,6 @@ function ThreatModal({ close }: { close: () => void }) {
    MAIN APP
 ────────────────────────────────────────────────────────────── */
 export default function App() {
-  /* state */
   const [rawUrl, setRawUrl] = useState('');
   const [busy, setBusy] = useState(false);
   const [shortUrl, setShortUrl] = useState<string | null>(null);
@@ -425,6 +435,34 @@ export default function App() {
 
   const [user, setUser] = useState<any>(null);
   const [urls, setUrls] = useState<any[]>([]);
+  const [qrUrl, setQrUrl] = useState('');
+  const [editingUrl, setEditingUrl] = useState<any>(null);
+
+  const fetchUrls = async () => {
+    const tok = localStorage.getItem('token');
+    if (!tok) return;
+    const r = await fetch(`${API_URL}/api/urls/user/urls`, { headers: { Authorization: `Bearer ${tok}` } });
+    const us = await r.json();
+    setUrls(Array.isArray(us) ? us : []);
+  };
+
+  const deleteUrl = async (id: number) => {
+    const tok = localStorage.getItem('token');
+    if (!tok) return;
+    await fetch(`${API_URL}/api/urls/user/urls/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${tok}` } });
+    fetchUrls();
+  };
+
+  const updateUrl = async (id: number, updates: any) => {
+    const tok = localStorage.getItem('token');
+    if (!tok) return;
+    await fetch(`${API_URL}/api/urls/user/urls/${id}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    fetchUrls();
+  };
 
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [showAuth, setShowAuth] = useState(false);
@@ -438,17 +476,17 @@ export default function App() {
   const notify = (msg: string, ok = true) => setToast({ msg, ok });
   const openAuth = (m: 'login' | 'signup' = 'login') => { setAuthMode(m); setShowAuth(true); };
 
-  /* auto-login */
   useEffect(() => {
     const tok = localStorage.getItem('token'); if (!tok) return;
-    Promise.all([
-      fetch(`${API_URL}/api/me`, { headers: { Authorization: `Bearer ${tok}` } }).then(r => r.json()),
-      fetch(`${API_URL}/api/urls/user/urls`, { headers: { Authorization: `Bearer ${tok}` } }).then(r => r.json()),
-    ]).then(([me, us]) => { if (me?.email) { setUser(me); setUrls(Array.isArray(us) ? us : []); } })
-      .catch(() => localStorage.removeItem('token'));
+    fetch(`${API_URL}/api/me`, { headers: { Authorization: `Bearer ${tok}` } })
+      .then(r => r.json())
+      .then(me => {
+        if (me?.email) setUser(me);
+        else localStorage.removeItem('token');
+      });
+    fetchUrls();
   }, []);
 
-  /* shorten */
   const shorten = async () => {
     if (!rawUrl.trim()) return;
     setBusy(true); setShortUrl(null);
@@ -480,7 +518,6 @@ export default function App() {
 
   const totalClicks = urls.reduce((a, u) => a + (u.click_count || 0), 0);
 
-  /* ── FEATURE CARDS CONFIG ── */
   const features = [
     {
       icon: 'M13 10V3L4 14h7v7l9-11h-7z',
@@ -516,13 +553,10 @@ export default function App() {
 
   return (
     <>
-      {/* ── PAGE BG ── */}
       <div className="page-bg"><div className="grid-bg" /></div>
 
-      {/* ── NAVBAR ── */}
       <header className="navbar">
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24 }}>
-          {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
             <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
               <rect width="32" height="32" rx="8" fill="#22c55e" />
@@ -534,7 +568,6 @@ export default function App() {
             <span style={{ fontSize: 9, fontWeight: 800, color: '#22c55e', border: '1px solid rgba(34,197,94,.25)', background: 'rgba(34,197,94,.08)', padding: '2px 7px', borderRadius: 6, letterSpacing: '0.1em' }}>BETA</span>
           </div>
 
-          {/* Nav links */}
           <nav style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             {[
               { label: 'Features', onClick: () => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }) },
@@ -552,7 +585,6 @@ export default function App() {
             ))}
           </nav>
 
-          {/* Auth */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
             {user ? (
               <>
@@ -580,9 +612,7 @@ export default function App() {
       </header>
 
       <main style={{ flex: 1 }}>
-        {/* ══════════════════ HERO ══════════════════ */}
         <section style={{ maxWidth: 900, margin: '0 auto', padding: '80px 32px 64px', textAlign: 'center' }} className="a-up">
-          {/* Live badge */}
           <div className="a-float" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 99, background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.2)', color: '#22c55e', fontSize: 12, fontWeight: 700, marginBottom: 36, letterSpacing: '.02em' }}>
             <span style={{ position: 'relative', display: 'inline-flex', width: 8, height: 8 }}>
               <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#22c55e', opacity: .75, animation: 'ping2 1.5s ease-out infinite' }} />
@@ -592,7 +622,6 @@ export default function App() {
             <style>{`@keyframes ping2{0%{transform:scale(1);opacity:.75}100%{transform:scale(2.2);opacity:0}}`}</style>
           </div>
 
-          {/* Headline */}
           <h1 style={{ fontSize: 'clamp(42px,7vw,76px)', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.03em', marginBottom: 24 }}>
             <span className="gt-white">Intelligent Links for<br />a </span>
             <span className="gt-green">Smarter Web</span>
@@ -603,11 +632,9 @@ export default function App() {
             and unlock deep analytics — all in one premium platform.
           </p>
 
-          {/* ── SHORTENER ── */}
           <div style={{ maxWidth: 740, margin: '0 auto' }}>
             <div className="shortener-box">
               <div style={{ display: 'flex', gap: 8 }}>
-                {/* URL input */}
                 <div className="url-row" style={{ flex: 1 }}>
                   <Svg d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" size={20} color="#253850" />
                   <input ref={inputRef} type="url" value={rawUrl} onChange={e => setRawUrl(e.target.value)}
@@ -622,14 +649,12 @@ export default function App() {
                     </button>
                   )}
                 </div>
-                {/* Shorten button */}
                 <button onClick={shorten} disabled={busy || !rawUrl.trim()} className="btn-primary" style={{ borderRadius: '1.125rem', minWidth: 160 }}>
                   {busy ? <Spinner /> : <>Shorten Now <Svg d="M14 5l7 7m0 0l-7 7m7-7H3" size={18} /></>}
                 </button>
               </div>
             </div>
 
-            {/* AI toggle */}
             <div style={{
               marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 13, padding: '8px 16px', borderRadius: 12,
               transition: 'all .4s',
@@ -642,7 +667,6 @@ export default function App() {
               </label>
             </div>
 
-            {/* Advanced options */}
             {user && (
               <div style={{ marginTop: 12 }}>
                 <button onClick={() => setShowAdv(s => !s)} style={{ background: 'none', border: 'none', color: '#3d5270', fontFamily: 'Inter,sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, margin: '0 auto', transition: 'color .15s' }}
@@ -673,7 +697,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Result */}
             {shortUrl && (
               <div className="a-up" style={{ marginTop: 16, padding: '14px 18px', borderRadius: 18, background: 'rgba(34,197,94,.06)', border: '1px solid rgba(34,197,94,.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
                 <div style={{ minWidth: 0 }}>
@@ -694,7 +717,6 @@ export default function App() {
             )}
           </div>
 
-          {/* Trust row */}
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px 32px', marginTop: 28, fontSize: 12, color: '#253850' }}>
             {['No account required', 'SSL encrypted', '99.9% uptime', 'GDPR compliant', '90+ threat databases'].map(t => (
               <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -704,7 +726,6 @@ export default function App() {
           </div>
         </section>
 
-        {/* ══════════════════ STATS BAND ══════════════════ */}
         <section style={{ maxWidth: 900, margin: '0 auto 64px', padding: '0 32px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14 }}>
             {[
@@ -721,10 +742,8 @@ export default function App() {
           </div>
         </section>
 
-        {/* ══════════════════ DASHBOARD ══════════════════ */}
         {user && (
           <section ref={dashRef} style={{ maxWidth: 1200, margin: '0 auto 80px', padding: '0 32px' }} className="a-up">
-            {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
               <div>
                 <div className="eyebrow" style={{ marginBottom: 6 }}>Your Dashboard</div>
@@ -741,7 +760,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Stat cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
               {[
                 { l: 'Total Clicks', v: fmt(totalClicks), color: '#4ade80', bg: 'rgba(34,197,94,.07)', border: 'rgba(34,197,94,.15)', i: 'M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
@@ -759,7 +777,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* Links table */}
             <div className="card" style={{ overflow: 'hidden' }}>
               {urls.length > 0 ? (
                 <div style={{ overflowX: 'auto' }}>
@@ -801,12 +818,23 @@ export default function App() {
                             </div>
                           </td>
                           <td style={{ textAlign: 'center' }}>
-                            <button onClick={() => { navigator.clipboard.writeText(`${API_URL}/${u.short_code}`); notify('Copied!'); }}
-                              style={{ width: 34, height: 34, borderRadius: 10, border: 'none', background: 'rgba(255,255,255,.04)', color: '#3d5270', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', transition: 'all .15s' }}
-                              onMouseEnter={e => { (e.currentTarget.style.background = 'rgba(34,197,94,.1)'); (e.currentTarget.style.color = '#22c55e'); }}
-                              onMouseLeave={e => { (e.currentTarget.style.background = 'rgba(255,255,255,.04)'); (e.currentTarget.style.color = '#3d5270'); }}>
-                              <Svg d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" size={16} />
-                            </button>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
+                              <button onClick={() => { navigator.clipboard.writeText(`${API_URL}/${u.short_code}`); notify('Copied!'); }} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 6 }} title="Copy">
+                                <Svg d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" size={18} />
+                              </button>
+                              <button onClick={() => setQrUrl(`${API_URL}/${u.short_code}`)} style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', padding: 6 }} title="QR Code">
+                                <Svg d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6zm3-1v1h-1v-1h1zm-1 2v1h-1v-1h1z" size={18} />
+                              </button>
+                              <button onClick={() => updateUrl(u.id, { is_active: !u.is_active })} style={{ background: 'none', border: 'none', color: u.is_active ? '#22c55e' : '#f87171', cursor: 'pointer', padding: 6 }} title={u.is_active ? 'Disable Link' : 'Enable Link'}>
+                                <Svg d="M18.364 5.636l-1.414 1.414a7 7 0 11-9.9 0L5.636 5.636a9 9 0 1012.728 0z M12 2v9" size={18} />
+                              </button>
+                              <button onClick={() => setEditingUrl(u)} style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', padding: 6 }} title="Notes">
+                                <Svg d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" size={18} />
+                              </button>
+                              <button onClick={() => deleteUrl(u.id)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: 6 }} title="Delete">
+                                <Svg d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" size={18} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -911,6 +939,38 @@ export default function App() {
         <AuthModal mode={authMode} close={() => setShowAuth(false)}
           switchMode={() => setAuthMode(m => m === 'login' ? 'signup' : 'login')}
           onSuccess={(u, us) => { setUser(u); setUrls(us); notify(`Welcome, ${u.name}! 🎉`); }} />
+      )}
+      {qrUrl && (
+        <Modal close={() => setQrUrl('')}>
+          <div style={{ padding: 32, textAlign: 'center' }}>
+            <h3 style={{ color: 'white', marginBottom: 20 }}>Link QR Code</h3>
+            <div style={{ background: 'white', padding: 16, borderRadius: 12, display: 'inline-block', marginBottom: 24 }}>
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}`} alt="QR Code" width={200} height={200} style={{ display: 'block' }} />
+            </div>
+            <a href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(qrUrl)}`} download="qrcode.png" target="_blank" rel="noreferrer" className="btn-primary" style={{ display: 'block', textDecoration: 'none' }}>
+              Download High-Res PNG
+            </a>
+          </div>
+        </Modal>
+      )}
+
+      {editingUrl && (
+        <Modal close={() => setEditingUrl(null)}>
+          <div style={{ padding: 32 }}>
+            <h3 style={{ color: 'white', marginBottom: 20 }}>Edit Link Note</h3>
+            <textarea 
+              defaultValue={editingUrl.notes || ''} 
+              id="edit-note"
+              style={{ width: '100%', height: 100, background: 'rgba(8,14,26,.8)', border: '1px solid #1a2e46', borderRadius: 12, padding: 16, color: 'white', fontFamily: 'Inter, sans-serif', resize: 'none', outline: 'none' }} 
+              placeholder="e.g. Cold email campaign link..."
+            />
+            <button onClick={() => {
+              const val = (document.getElementById('edit-note') as HTMLTextAreaElement).value;
+              updateUrl(editingUrl.id, { notes: val });
+              setEditingUrl(null);
+            }} className="btn-primary" style={{ width: '100%', marginTop: 20 }}>Save Note</button>
+          </div>
+        </Modal>
       )}
       {showAnalytics && <AnalyticsModal close={() => setShowAnalytics(false)} />}
       {showThreat && <ThreatModal close={() => setShowThreat(false)} />}

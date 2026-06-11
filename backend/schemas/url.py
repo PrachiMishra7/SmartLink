@@ -20,7 +20,13 @@ class URLResponse(BaseModel):
     created_at: datetime
     expiry_date: Optional[datetime] = None
     qr_code_url: Optional[str] = None
+    is_active: bool = True
+    notes: Optional[str] = None
     click_count: int
 
     class Config:
         from_attributes = True
+
+class URLUpdate(BaseModel):
+    is_active: Optional[bool] = None
+    notes: Optional[str] = None

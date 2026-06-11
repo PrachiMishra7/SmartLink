@@ -26,6 +26,8 @@ class URL(Base):
     expiry_date = Column(DateTime(timezone=True), nullable=True)
     password = Column(String(255), nullable=True)
     qr_code_url = Column(String(255), nullable=True)
+    is_active = Column(Boolean, default=True)
+    notes = Column(Text, nullable=True)
     click_count = Column(Integer, default=0)
 
     owner = relationship("User", back_populates="urls")
