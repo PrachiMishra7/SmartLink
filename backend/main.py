@@ -22,10 +22,12 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api", tags=["authentication"])
 app.include_router(urls.router, prefix="/api/urls", tags=["urls"])
 
+from fastapi import BackgroundTasks
+
 # Root redirect for shortened URLs
 @app.get("/{short_code}")
-def root_redirect(short_code: str, request: Request, db: Session = Depends(urls.get_db)):
-    return urls.redirect_to_url(short_code=short_code, request=request, db=db)
+def root_redirect(short_code: str, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(urls.get_db)):
+    return urls.redirect_to_url(short_code=short_code, request=request, background_tasks=background_tasks, db=db)
 
 @app.get("/")
 def read_root():

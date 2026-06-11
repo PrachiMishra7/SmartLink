@@ -321,63 +321,77 @@ function AnalyticsModal({ close }: { close: () => void }) {
    THREAT MODAL
 ────────────────────────────────────────────────────────────── */
 function ThreatModal({ close }: { close: () => void }) {
-  const [p, setP] = useState(0);
-  const done = p >= 100;
-  useEffect(() => { const iv = setInterval(() => setP(x => { if (x >= 100) { clearInterval(iv); return 100; } return x + 2; }), 55); return () => clearInterval(iv); }, []);
-  const steps = [
-    { l: 'Phishing database', done: p >= 28 },
-    { l: 'Malware signatures', done: p >= 56 },
-    { l: 'Spam networks', done: p >= 78 },
-    { l: 'SSL certificate', done: p >= 96 },
-  ];
+  const [url, setUrl] = useState('');
+  const [status, setStatus] = useState<'idle' | 'scanning' | 'safe' | 'malicious' | 'error'>('idle');
+
+  const scan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!url.trim()) return;
+    setStatus('scanning');
+    try {
+      const r = await fetch(`${API_URL}/api/threats/scan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      if (!r.ok) throw new Error('Scan failed');
+      const d = await r.json();
+      setStatus(d.malicious ? 'malicious' : 'safe');
+    } catch {
+      setStatus('error');
+    }
+  };
+
   return (
     <Modal close={close}>
       <div style={{ padding: '36px 32px 32px', textAlign: 'center' }}>
         <div style={{
           width: 72, height: 72, borderRadius: 20, margin: '0 auto 20px',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: done ? 'rgba(34,197,94,.1)' : 'rgba(239,68,68,.08)',
-          border: `1px solid ${done ? 'rgba(34,197,94,.35)' : 'rgba(239,68,68,.25)'}`,
-          color: done ? '#22c55e' : '#f87171',
+          background: status === 'safe' ? 'rgba(34,197,94,.1)' : status === 'malicious' ? 'rgba(239,68,68,.1)' : 'rgba(255,255,255,.05)',
+          border: `1px solid ${status === 'safe' ? 'rgba(34,197,94,.35)' : status === 'malicious' ? 'rgba(239,68,68,.35)' : 'rgba(255,255,255,.1)'}`,
+          color: status === 'safe' ? '#22c55e' : status === 'malicious' ? '#ef4444' : '#94a3b8',
           transition: 'all .6s',
-          boxShadow: done ? '0 0 40px rgba(34,197,94,.2)' : 'none',
+          boxShadow: status === 'safe' ? '0 0 40px rgba(34,197,94,.2)' : status === 'malicious' ? '0 0 40px rgba(239,68,68,.2)' : 'none',
         }}>
-          {done
-            ? <Svg d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" size={34} />
-            : <svg width={30} height={30} fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"
-              style={{ animation: 'spin 1s linear infinite' }}>
+          {status === 'scanning' ? (
+            <svg width={30} height={30} fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24" style={{ animation: 'spin 1s linear infinite' }}>
               <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>}
+            </svg>
+          ) : status === 'safe' ? (
+            <Svg d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" size={34} />
+          ) : status === 'malicious' ? (
+            <Svg d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" size={34} />
+          ) : (
+             <Svg d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" size={30} />
+          )}
         </div>
+        
         <div style={{ color: 'white', fontWeight: 800, fontSize: 20, marginBottom: 8 }}>
-          {done ? '✅ All Clear!' : 'Scanning URL...'}
+          {status === 'safe' ? '✅ Safe URL!' : status === 'malicious' ? '⚠️ Malicious URL Detected' : status === 'scanning' ? 'Scanning with VirusTotal...' : 'Threat Scanner'}
         </div>
+        
         <div style={{ color: '#3d5270', fontSize: 13, lineHeight: 1.7, marginBottom: 24, padding: '0 16px' }}>
-          {done
-            ? 'No threats detected. SmartLink actively protects all users against phishing, malware, and spam in real time.'
-            : 'Checking your URL against 90+ global threat databases in real time...'}
+          {status === 'safe'
+            ? 'No threats detected. This URL is safe to shorten.'
+            : status === 'malicious'
+            ? 'Warning! This URL has been flagged by VirusTotal as malicious (phishing, malware, or spam). SmartLink will block it.'
+            : status === 'scanning'
+            ? 'Checking your URL against 90+ global threat databases in real time...'
+            : 'Enter a URL to scan it against 90+ global threat databases before shortening.'}
         </div>
-        <div className="pbar" style={{ marginBottom: 24 }}>
-          <div className="pbar-fill" style={{ width: `${p}%`, background: done ? 'linear-gradient(90deg,#16a34a,#4ade80)' : 'linear-gradient(90deg,#dc2626,#f87171)' }} />
-        </div>
-        <div style={{ textAlign: 'left' }}>
-          {steps.map(s => (
-            <div key={s.l} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, fontSize: 13, color: s.done ? '#4ade80' : '#253850', transition: 'color .4s' }}>
-              <div style={{
-                width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: `1px solid ${s.done ? 'rgba(34,197,94,.4)' : '#1a2e46'}`,
-                background: s.done ? 'rgba(34,197,94,.12)' : 'transparent',
-                transition: 'all .4s',
-              }}>
-                {s.done && <Svg d="M5 13l4 4L19 7" size={11} color="#4ade80" />}
-              </div>
-              {s.l}
-            </div>
-          ))}
-        </div>
-        {done && (
-          <button onClick={close} className="btn-primary" style={{ width: '100%', marginTop: 20 }}>Close</button>
+
+        {status === 'idle' || status === 'error' ? (
+          <form onSubmit={scan} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <input type="url" placeholder="https://example.com" value={url} onChange={e => setUrl(e.target.value)} required
+              style={{ background: 'rgba(8,14,26,.8)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'border-color .2s', fontFamily: 'Inter,sans-serif', width: '100%' }}
+              onFocus={e => (e.target.style.borderColor = 'rgba(96,165,250,.5)')}
+              onBlur={e => (e.target.style.borderColor = '#1a2e46')} />
+            {status === 'error' && <div style={{ color: '#f87171', fontSize: 12 }}>Scan failed. Please try again.</div>}
+            <button type="submit" className="btn-primary" style={{ width: '100%', background: '#3b82f6', color: 'white', border: 'none' }}>Scan URL</button>
+          </form>
+        ) : (
+          <button onClick={() => { setStatus('idle'); setUrl(''); }} className="btn-outline" style={{ width: '100%', marginTop: 10 }}>Scan Another URL</button>
         )}
       </div>
     </Modal>

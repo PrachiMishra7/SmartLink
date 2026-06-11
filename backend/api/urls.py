@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Form
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Form, BackgroundTasks
 from fastapi.responses import RedirectResponse, HTMLResponse
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from typing import Optional
+import urllib.request
+import json
 
-from backend.database.database import get_db
-from backend.database.models import URL, User, ClickLog
+from backend.database.database import get_db, SessionLocal
+from backend.database.models import URL, User, ClickLog, ThreatLog
 from backend.schemas.url import URLCreate, URLResponse
 from backend.api.deps import get_current_user, get_current_user_optional
 from backend.core.utils import generate_short_code
@@ -14,6 +16,26 @@ from backend.core.ai import generate_ai_slug
 from backend.core.threats import is_malicious_url
 
 router = APIRouter()
+
+def fetch_geo_data(log_id: int, ip_address: str):
+    if not ip_address or ip_address == "127.0.0.1" or ip_address == "::1":
+        return
+    try:
+        req = urllib.request.Request(f"http://ip-api.com/json/{ip_address}")
+        with urllib.request.urlopen(req, timeout=3) as response:
+            data = json.loads(response.read().decode())
+            if data.get("status") == "success":
+                db = SessionLocal()
+                try:
+                    log = db.query(ClickLog).filter(ClickLog.id == log_id).first()
+                    if log:
+                        log.country = data.get("country")
+                        log.city = data.get("city")
+                        db.commit()
+                finally:
+                    db.close()
+    except Exception:
+        pass
 
 @router.post("/shorten", response_model=URLResponse, status_code=status.HTTP_201_CREATED)
 def shorten_url(
@@ -68,7 +90,7 @@ def get_user_urls(db: Session = Depends(get_db), current_user: User = Depends(ge
     return urls
 
 @router.get("/{short_code}")
-def redirect_to_url(short_code: str, request: Request, db: Session = Depends(get_db)):
+def redirect_to_url(short_code: str, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     db_url = db.query(URL).filter(
         (URL.short_code == short_code) | (URL.custom_alias == short_code)
     ).first()
@@ -123,6 +145,10 @@ def redirect_to_url(short_code: str, request: Request, db: Session = Depends(get
     db_url.click_count += 1
     db.add(click_log)
     db.commit()
+    db.refresh(click_log)
+    
+    if click_log.ip_address:
+        background_tasks.add_task(fetch_geo_data, click_log.id, click_log.ip_address)
 
     return RedirectResponse(url=db_url.original_url)
 
@@ -198,3 +224,12 @@ def get_user_analytics(db: Session = Depends(get_db), current_user: User = Depen
         "days": days,
         "geo": geo
     }
+
+from pydantic import BaseModel
+class ScanRequest(BaseModel):
+    url: str
+
+@router.post("/threats/scan")
+def scan_url(req: ScanRequest):
+    is_malicious = is_malicious_url(req.url)
+    return {"malicious": is_malicious}
