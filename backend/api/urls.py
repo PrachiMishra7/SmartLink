@@ -19,6 +19,14 @@ router = APIRouter()
 
 def fetch_geo_data(log_id: int, ip_address: str):
     if not ip_address or ip_address == "127.0.0.1" or ip_address == "::1":
+        db = SessionLocal()
+        try:
+            log = db.query(ClickLog).filter(ClickLog.id == log_id).first()
+            if log:
+                log.country = "Localhost"
+                db.commit()
+        finally:
+            db.close()
         return
     try:
         req = urllib.request.Request(f"http://ip-api.com/json/{ip_address}")
@@ -233,3 +241,12 @@ class ScanRequest(BaseModel):
 def scan_url(req: ScanRequest):
     is_malicious = is_malicious_url(req.url)
     return {"malicious": is_malicious}
+
+@router.get("/platform/stats")
+def get_platform_stats(db: Session = Depends(get_db)):
+    total_urls = db.query(URL).count()
+    total_users = db.query(User).count()
+    return {
+        "links_shortened": total_urls,
+        "active_users": total_users
+    }

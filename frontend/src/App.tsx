@@ -185,7 +185,7 @@ function AnalyticsModal({ close }: { close: () => void }) {
     setTimeout(() => setVis(true), 120); 
     const tok = localStorage.getItem('token');
     if (tok) {
-      fetch(`${API_URL}/api/user/analytics`, { headers: { Authorization: `Bearer ${tok}` } })
+      fetch(`${API_URL}/api/urls/user/analytics`, { headers: { Authorization: `Bearer ${tok}` } })
         .then(r => r.json())
         .then(d => setData(d))
         .catch(() => setData({}));
@@ -413,6 +413,15 @@ export default function App() {
   const [exp, setExp] = useState('');
   const [showAdv, setShowAdv] = useState(false);
   const [aiHighlight, setAiHighlight] = useState(false);
+
+  const [stats, setStats] = useState({ links_shortened: 0, active_users: 0 });
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/urls/platform/stats`)
+      .then(r => r.json())
+      .then(d => setStats(d))
+      .catch(() => {});
+  }, []);
 
   const [user, setUser] = useState<any>(null);
   const [urls, setUrls] = useState<any[]>([]);
@@ -698,7 +707,12 @@ export default function App() {
         {/* ══════════════════ STATS BAND ══════════════════ */}
         <section style={{ maxWidth: 900, margin: '0 auto 64px', padding: '0 32px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14 }}>
-            {[{ n: '10M+', l: 'Links Shortened' }, { n: '200K+', l: 'Active Users' }, { n: '99.9%', l: 'Uptime SLA' }, { n: '90+', l: 'Threat DBs' }].map(s => (
+            {[
+              { n: stats.links_shortened.toLocaleString(), l: 'Links Shortened' }, 
+              { n: stats.active_users.toLocaleString(), l: 'Active Users' }, 
+              { n: '99.9%', l: 'Uptime SLA' }, 
+              { n: '90+', l: 'Threat DBs' }
+            ].map(s => (
               <div key={s.l} className="card" style={{ padding: '22px 20px', textAlign: 'center' }}>
                 <div className="gt-green" style={{ fontSize: 32, fontWeight: 900, marginBottom: 4 }}>{s.n}</div>
                 <div style={{ fontSize: 12, color: '#3d5270', fontWeight: 600 }}>{s.l}</div>
