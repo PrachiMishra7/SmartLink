@@ -177,25 +177,48 @@ function AuthModal({ mode, close, switchMode, onSuccess }:
 /* ──────────────────────────────────────────────────────────────
    ANALYTICS MODAL
 ────────────────────────────────────────────────────────────── */
-function AnalyticsModal({ close, urls }: { close: () => void; urls: any[] }) {
+function AnalyticsModal({ close }: { close: () => void }) {
   const [vis, setVis] = useState(false);
-  useEffect(() => { setTimeout(() => setVis(true), 120); }, []);
-  const total = urls.reduce((a, u) => a + (u.click_count || 0), 0);
+  const [data, setData] = useState<any>(null);
+  
+  useEffect(() => { 
+    setTimeout(() => setVis(true), 120); 
+    const tok = localStorage.getItem('token');
+    if (tok) {
+      fetch(`${API_URL}/api/user/analytics`, { headers: { Authorization: `Bearer ${tok}` } })
+        .then(r => r.json())
+        .then(d => setData(d))
+        .catch(() => setData({}));
+    } else {
+      setData({});
+    }
+  }, []);
+
+  if (!data) return <Modal close={close}><div style={{ padding: 40, textAlign: 'center' }}><Spinner /></div></Modal>;
 
   const W = 680, H = 130;
-  const barData = [38, 62, 47, 88, 55, 79, 100];
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const pts = barData.map((v, i) => ({ x: (i / (barData.length - 1)) * W, y: H - (v / 100) * H }));
-  const pathD = pts.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `C ${pts[i-1].x+36} ${pts[i-1].y} ${p.x-36} ${p.y} ${p.x} ${p.y}`).join(' ');
+  const barData = data.daily_clicks || [0, 0, 0, 0, 0, 0, 0];
+  const days = data.days || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const maxBar = Math.max(1, ...barData);
+  const pts = barData.map((v: number, i: number) => ({ x: (i / (barData.length - 1)) * W, y: H - (v / maxBar) * H }));
+  const pathD = pts.map((p: any, i: number) => i === 0 ? `M ${p.x} ${p.y}` : `C ${pts[i-1].x+36} ${pts[i-1].y} ${p.x-36} ${p.y} ${p.x} ${p.y}`).join(' ');
   const fillD = `${pathD} L ${W} ${H} L 0 ${H} Z`;
 
   const stats = [
-    { label: 'Total Clicks', value: fmt(total || 12405), color: '#4ade80', bg: 'rgba(34,197,94,.08)', border: 'rgba(34,197,94,.2)', trend: '+24% this week' },
-    { label: 'Unique Visitors', value: fmt(Math.floor((total || 12405) * .8)), color: '#60a5fa', bg: 'rgba(96,165,250,.08)', border: 'rgba(96,165,250,.2)', trend: '+18% this week' },
-    { label: 'Top Country', value: 'USA', color: '#c084fc', bg: 'rgba(192,132,252,.08)', border: 'rgba(192,132,252,.2)', trend: 'California 32%' },
-    { label: 'Avg CTR', value: '8.3%', color: '#fbbf24', bg: 'rgba(251,191,36,.08)', border: 'rgba(251,191,36,.2)', trend: '+5.1%' },
+    { label: 'Total Clicks', value: fmt(data.total_clicks || 0), color: '#4ade80', bg: 'rgba(34,197,94,.08)', border: 'rgba(34,197,94,.2)' },
+    { label: 'Unique Visitors', value: fmt(data.unique_visitors || 0), color: '#60a5fa', bg: 'rgba(96,165,250,.08)', border: 'rgba(96,165,250,.2)' },
+    { label: 'Top Country', value: data.geo?.[0]?.label || 'N/A', color: '#c084fc', bg: 'rgba(192,132,252,.08)', border: 'rgba(192,132,252,.2)' },
+    { label: 'Avg CTR', value: data.total_clicks ? '100%' : '0%', color: '#fbbf24', bg: 'rgba(251,191,36,.08)', border: 'rgba(251,191,36,.2)' },
   ];
-  const geo = [{ c: 'United States', p: 45, col: '#22c55e' }, { c: 'United Kingdom', p: 22, col: '#4ade80' }, { c: 'Germany', p: 15, col: '#86efac' }];
+  const geo = data.geo || [];
+  const geoTotal = Math.max(1, geo.reduce((a: number, g: any) => a + g.count, 0));
+  const colors = ['#22c55e', '#4ade80', '#86efac'];
+
+  const devs = data.devices || [];
+  const devsTotal = Math.max(1, devs.reduce((a: number, d: any) => a + d.count, 0));
+
+  const browsers = data.browsers || [];
+  const browsersTotal = Math.max(1, browsers.reduce((a: number, b: any) => a + b.count, 0));
 
   return (
     <Modal close={close} wide>
@@ -207,7 +230,7 @@ function AnalyticsModal({ close, urls }: { close: () => void; urls: any[] }) {
           </div>
           <div>
             <div style={{ color: 'white', fontWeight: 800, fontSize: 20 }}>Deep Analytics</div>
-            <div style={{ color: '#3d5270', fontSize: 12, marginTop: 2 }}>Preview mode — upgrade to Pro for live data</div>
+            <div style={{ color: '#3d5270', fontSize: 12, marginTop: 2 }}>Real-time statistics for your short links</div>
           </div>
         </div>
 
@@ -217,7 +240,6 @@ function AnalyticsModal({ close, urls }: { close: () => void; urls: any[] }) {
             <div key={s.label} style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: 16, padding: '16px 14px' }}>
               <div style={{ fontSize: 11, color: '#3d5270', fontWeight: 600, marginBottom: 6 }}>{s.label}</div>
               <div style={{ fontSize: 26, fontWeight: 900, color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: 11, color: s.color, opacity: .65, marginTop: 4 }}>{s.trend}</div>
             </div>
           ))}
         </div>
@@ -239,10 +261,10 @@ function AnalyticsModal({ close, urls }: { close: () => void; urls: any[] }) {
             </defs>
             <path d={fillD} fill="url(#chartGrad)" />
             <path d={pathD} fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" className="a-line" />
-            {pts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={4} fill="#0c1526" stroke="#22c55e" strokeWidth="2.5" />)}
+            {pts.map((p: any, i: number) => <circle key={i} cx={p.x} cy={p.y} r={4} fill="#0c1526" stroke="#22c55e" strokeWidth="2.5" />)}
           </svg>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-            {days.map(d => <span key={d} style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#253850', fontWeight: 600 }}>{d}</span>)}
+            {days.map((d: string) => <span key={d} style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#253850', fontWeight: 600 }}>{d}</span>)}
           </div>
         </div>
 
@@ -251,16 +273,17 @@ function AnalyticsModal({ close, urls }: { close: () => void; urls: any[] }) {
           {/* Geo */}
           <div className="card" style={{ padding: '20px 20px' }}>
             <div style={{ color: '#94a3b8', fontWeight: 700, fontSize: 13, marginBottom: 16 }}>Geographic Distribution</div>
-            {geo.map(g => (
-              <div key={g.c} style={{ marginBottom: 14 }}>
+            {geo.length === 0 && <div style={{ color: '#3d5270', fontSize: 12 }}>No geographic data available</div>}
+            {geo.map((g: any, i: number) => (
+              <div key={g.label} style={{ marginBottom: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 12 }}>
                   <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: g.col, display: 'inline-block' }} />{g.c}
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: colors[i%colors.length], display: 'inline-block' }} />{g.label}
                   </span>
-                  <span style={{ color: 'white', fontWeight: 700 }}>{g.p}%</span>
+                  <span style={{ color: 'white', fontWeight: 700 }}>{Math.round((g.count/geoTotal)*100)}%</span>
                 </div>
                 <div className="pbar">
-                  <div className="pbar-fill" style={{ width: vis ? `${g.p}%` : '0%', background: g.col }} />
+                  <div className="pbar-fill" style={{ width: vis ? `${(g.count/geoTotal)*100}%` : '0%', background: colors[i%colors.length] }} />
                 </div>
               </div>
             ))}
@@ -268,21 +291,23 @@ function AnalyticsModal({ close, urls }: { close: () => void; urls: any[] }) {
           {/* Devices & Browsers */}
           <div className="card" style={{ padding: '20px 20px' }}>
             <div style={{ color: '#94a3b8', fontWeight: 700, fontSize: 13, marginBottom: 14 }}>Devices</div>
-            <div style={{ display: 'flex', gap: 10, marginBottom: 18 }}>
-              {[{ l: 'Mobile', p: '38%' }, { l: 'Desktop', p: '54%' }, { l: 'Tablet', p: '8%' }].map(d => (
-                <div key={d.l} style={{ flex: 1, background: 'rgba(8,14,26,.8)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 11, color: '#3d5270', marginBottom: 4 }}>{d.l}</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: 'white' }}>{d.p}</div>
+            {devs.length === 0 && <div style={{ color: '#3d5270', fontSize: 12, marginBottom: 18 }}>No device data</div>}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 18, overflowX: 'auto' }}>
+              {devs.map((d: any) => (
+                <div key={d.label} style={{ flex: 1, minWidth: 60, background: 'rgba(8,14,26,.8)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 11, color: '#3d5270', marginBottom: 4 }}>{d.label}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: 'white' }}>{Math.round((d.count/devsTotal)*100)}%</div>
                 </div>
               ))}
             </div>
             <div style={{ color: '#94a3b8', fontWeight: 700, fontSize: 13, marginBottom: 12 }}>Top Browsers</div>
-            {[{ n: 'Chrome 🌐', p: 62 }, { n: 'Safari 🧭', p: 28 }].map(b => (
-              <div key={b.n} style={{ marginBottom: 12 }}>
+            {browsers.length === 0 && <div style={{ color: '#3d5270', fontSize: 12 }}>No browser data</div>}
+            {browsers.map((b: any) => (
+              <div key={b.label} style={{ marginBottom: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
-                  <span style={{ color: '#94a3b8' }}>{b.n}</span><span style={{ color: 'white', fontWeight: 700 }}>{b.p}%</span>
+                  <span style={{ color: '#94a3b8' }}>{b.label}</span><span style={{ color: 'white', fontWeight: 700 }}>{Math.round((b.count/browsersTotal)*100)}%</span>
                 </div>
-                <div className="pbar"><div className="pbar-fill" style={{ width: vis ? `${b.p}%` : '0%' }} /></div>
+                <div className="pbar"><div className="pbar-fill" style={{ width: vis ? `${(b.count/browsersTotal)*100}%` : '0%' }} /></div>
               </div>
             ))}
           </div>
@@ -437,7 +462,7 @@ export default function App() {
     {
       icon: 'M13 10V3L4 14h7v7l9-11h-7z',
       title: 'AI-Powered Slugs',
-      badge: 'Pro',
+      badge: 'Free',
       desc: 'Automatically generate readable, SEO-friendly short codes using advanced AI. Stop ugly random hashes forever.',
       accent: '#60a5fa', accBg: 'rgba(96,165,250,.08)', accBorder: 'rgba(96,165,250,.2)',
       action: () => {
@@ -489,9 +514,8 @@ export default function App() {
           {/* Nav links */}
           <nav style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             {[
-              { label: 'Features', onClick: () => {} },
+              { label: 'Features', onClick: () => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }) },
               { label: 'Analytics', onClick: () => setShowAnalytics(true) },
-              { label: 'Pricing', onClick: () => {} },
             ].map(n => (
               <button key={n.label} onClick={n.onClick} style={{
                 background: 'none', border: 'none', color: '#64748b', fontFamily: 'Inter,sans-serif',
@@ -592,7 +616,6 @@ export default function App() {
                 style={{ width: 16, height: 16, accentColor: '#22c55e', cursor: 'pointer' }} />
               <label htmlFor="ai" style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 7 }}>
                 ✨ Use AI to generate a readable, semantic slug
-                {!user && <span style={{ fontSize: 10, fontWeight: 800, color: '#22c55e', border: '1px solid rgba(34,197,94,.25)', background: 'rgba(34,197,94,.08)', padding: '2px 7px', borderRadius: 6 }}>PRO</span>}
               </label>
             </div>
 
@@ -603,7 +626,7 @@ export default function App() {
                   onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = '#22c55e')}
                   onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = '#3d5270')}>
                   <Svg d={showAdv ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} size={14} />
-                  Advanced Options (Pro)
+                  Advanced Options
                 </button>
                 {showAdv && (
                   <div className="a-up" style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
@@ -776,7 +799,7 @@ export default function App() {
         )}
 
         {/* ══════════════════ FEATURES ══════════════════ */}
-        <section style={{ maxWidth: 1100, margin: '0 auto 80px', padding: '0 32px' }}>
+        <section id="features" style={{ maxWidth: 1100, margin: '0 auto 80px', padding: '0 32px' }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <div className="eyebrow" style={{ marginBottom: 12 }}>Platform Features</div>
             <h2 className="gt-white" style={{ fontSize: 38, fontWeight: 900, marginBottom: 14, letterSpacing: '-.02em' }}>Everything you need</h2>
@@ -803,6 +826,8 @@ export default function App() {
             ))}
           </div>
         </section>
+
+
 
         {/* ══════════════════ CTA BANNER ══════════════════ */}
         {!user && (
@@ -838,9 +863,9 @@ export default function App() {
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
             {['Privacy Policy', 'Terms', 'API Docs', 'Status', 'Support'].map(l => (
-              <a key={l} href="#" style={{ color: '#253850', fontSize: 13, textDecoration: 'none', transition: 'color .15s' }}
+              <button key={l} onClick={() => notify(`${l} coming soon in v1.0`)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#253850', fontSize: 13, textDecoration: 'none', transition: 'color .15s', fontFamily: 'Inter,sans-serif' }}
                 onMouseEnter={e => ((e.target as HTMLElement).style.color = '#64748b')}
-                onMouseLeave={e => ((e.target as HTMLElement).style.color = '#253850')}>{l}</a>
+                onMouseLeave={e => ((e.target as HTMLElement).style.color = '#253850')}>{l}</button>
             ))}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: '#253850' }}>
@@ -859,7 +884,7 @@ export default function App() {
           switchMode={() => setAuthMode(m => m === 'login' ? 'signup' : 'login')}
           onSuccess={(u, us) => { setUser(u); setUrls(us); notify(`Welcome, ${u.name}! 🎉`); }} />
       )}
-      {showAnalytics && <AnalyticsModal close={() => setShowAnalytics(false)} urls={urls} />}
+      {showAnalytics && <AnalyticsModal close={() => setShowAnalytics(false)} />}
       {showThreat && <ThreatModal close={() => setShowThreat(false)} />}
       {toast && <Toast msg={toast.msg} ok={toast.ok} close={() => setToast(null)} />}
     </>

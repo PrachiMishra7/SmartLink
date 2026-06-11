@@ -147,3 +147,54 @@ def unlock_url(short_code: str, request: Request, password: str = Form(...), db:
     db.commit()
 
     return RedirectResponse(url=db_url.original_url, status_code=303)
+
+@router.get("/user/analytics")
+def get_user_analytics(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from sqlalchemy import func
+    from datetime import timedelta
+    
+    user_urls = db.query(URL).filter(URL.user_id == current_user.id).all()
+    url_ids = [u.id for u in user_urls]
+    
+    if not url_ids:
+        return {"total_clicks": 0, "unique_visitors": 0, "devices": [], "browsers": [], "daily_clicks": [0]*7, "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], "geo": []}
+        
+    total_clicks = sum(u.click_count for u in user_urls)
+    unique_visitors = db.query(func.count(func.distinct(ClickLog.ip_address))).filter(ClickLog.url_id.in_(url_ids)).scalar() or 0
+    
+    devices_q = db.query(ClickLog.device, func.count(ClickLog.id)).filter(ClickLog.url_id.in_(url_ids), ClickLog.device.isnot(None)).group_by(ClickLog.device).all()
+    devices = [{"label": d[0] if d[0] else "Unknown", "count": d[1]} for d in devices_q]
+    
+    browsers_q = db.query(ClickLog.browser, func.count(ClickLog.id)).filter(ClickLog.url_id.in_(url_ids), ClickLog.browser.isnot(None)).group_by(ClickLog.browser).all()
+    browsers = [{"label": b[0] if b[0] else "Unknown", "count": b[1]} for b in browsers_q]
+    
+    geo_q = db.query(ClickLog.country, func.count(ClickLog.id)).filter(ClickLog.url_id.in_(url_ids), ClickLog.country.isnot(None)).group_by(ClickLog.country).order_by(func.count(ClickLog.id).desc()).limit(3).all()
+    geo = [{"label": g[0] if g[0] else "Unknown", "count": g[1]} for g in geo_q]
+    
+    # fetch logs for last 7 days to bucket in memory to avoid dialect issues
+    seven_days_ago = datetime.now(timezone.utc) - timedelta(days=6)
+    recent_logs = db.query(ClickLog.timestamp).filter(ClickLog.url_id.in_(url_ids), ClickLog.timestamp >= seven_days_ago).all()
+    
+    daily_dict = {}
+    for log in recent_logs:
+        if log.timestamp:
+            date_str = log.timestamp.strftime("%Y-%m-%d")
+            daily_dict[date_str] = daily_dict.get(date_str, 0) + 1
+            
+    daily_clicks = []
+    days = []
+    for i in range(6, -1, -1):
+        dt = datetime.now(timezone.utc) - timedelta(days=i)
+        date_str = dt.strftime("%Y-%m-%d")
+        daily_clicks.append(daily_dict.get(date_str, 0))
+        days.append(dt.strftime("%a"))
+        
+    return {
+        "total_clicks": total_clicks,
+        "unique_visitors": unique_visitors,
+        "devices": devices,
+        "browsers": browsers,
+        "daily_clicks": daily_clicks,
+        "days": days,
+        "geo": geo
+    }
