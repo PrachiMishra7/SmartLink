@@ -9,7 +9,7 @@ class URLBase(BaseModel):
     expiry_date: Optional[datetime] = None
 
 class URLCreate(URLBase):
-    pass
+    use_ai: bool = False
 
 class URLResponse(BaseModel):
     id: int
