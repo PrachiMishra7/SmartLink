@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://127.0.0.1:8000');
 
 /* ──────────────────────────────────────────────────────────────
    TINY HELPERS
@@ -945,9 +945,9 @@ export default function App() {
           <div style={{ padding: 32, textAlign: 'center' }}>
             <h3 style={{ color: 'white', marginBottom: 20 }}>Link QR Code</h3>
             <div style={{ background: 'white', padding: 16, borderRadius: 12, display: 'inline-block', marginBottom: 24 }}>
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}`} alt="QR Code" width={200} height={200} style={{ display: 'block' }} />
+              <img src={`${API_URL}/api/urls/qr?data=${encodeURIComponent(qrUrl)}`} alt="QR Code" width={200} height={200} style={{ display: 'block' }} />
             </div>
-            <a href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(qrUrl)}`} download="qrcode.png" target="_blank" rel="noreferrer" className="btn-primary" style={{ display: 'block', textDecoration: 'none' }}>
+            <a href={`${API_URL}/api/urls/qr?data=${encodeURIComponent(qrUrl)}`} download="qrcode.png" target="_blank" rel="noreferrer" className="btn-primary" style={{ display: 'block', textDecoration: 'none' }}>
               Download High-Res PNG
             </a>
           </div>

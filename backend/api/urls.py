@@ -5,6 +5,9 @@ from sqlalchemy.orm import Session
 from typing import Optional
 import urllib.request
 import json
+import io
+import qrcode
+from fastapi.responses import StreamingResponse
 
 from backend.database.database import get_db, SessionLocal
 from backend.database.models import URL, User, ClickLog, ThreatLog
@@ -127,6 +130,17 @@ def update_url(url_id: int, url_update: URLUpdate, db: Session = Depends(get_db)
 def get_user_urls(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     urls = db.query(URL).filter(URL.user_id == current_user.id).order_by(URL.created_at.desc()).all()
     return urls
+
+@router.get("/qr")
+def generate_qr(data: str):
+    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+    qr.add_data(data)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return StreamingResponse(buf, media_type="image/png")
 
 @router.get("/{short_code}")
 def redirect_to_url(short_code: str, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):

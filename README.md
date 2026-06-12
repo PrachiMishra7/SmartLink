@@ -45,3 +45,6 @@ You will need two separate terminal windows to run the backend and the frontend 
 ---
 
 *Note: Make sure you leave both terminals running while you are working on or testing the project.*
+.\backend\venv\Scripts\activate
+
+uvicorn backend.main:app --reload
