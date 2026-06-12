@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str | None = None
     VIRUSTOTAL_API_KEY: str | None = None
     GOOGLE_SAFE_BROWSING_API_KEY: str | None = None
+    
+    # OAuth
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_CLIENT_SECRET: str | None = None
 
     class Config:
         env_file = ".env"

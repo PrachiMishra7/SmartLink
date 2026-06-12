@@ -67,10 +67,11 @@ function Modal({ close, children, wide = false }: { close: () => void; children:
     <div className="modal-bg a-in" onClick={e => e.target === e.currentTarget && close()}>
       <div className="card a-scale" style={{
         width: '100%', maxWidth: wide ? 780 : 460,
-        position: 'relative', overflow: 'hidden',
+        maxHeight: '90vh', overflowY: 'auto',
+        position: 'relative',
         boxShadow: '0 40px 100px rgba(0,0,0,.75)',
       }}>
-        <div style={{ position: 'absolute', inset: '0 0 auto', height: 1, background: 'linear-gradient(90deg,transparent,rgba(34,197,94,.5),transparent)' }} />
+        <div style={{ position: 'absolute', inset: '0 0 auto', height: 1, background: 'linear-gradient(90deg,transparent,rgba(34,197,94,.5),transparent)', zIndex: 20 }} />
         <button onClick={close} style={{
           position: 'absolute', top: 16, right: 16, zIndex: 10,
           width: 32, height: 32, borderRadius: 10, border: 'none',
@@ -123,7 +124,7 @@ function AuthModal({ mode, close, switchMode, onSuccess }:
   };
 
   return (
-    <Modal close={close}>
+    <Modal close={close} wide>
       <div style={{ padding: '36px 32px 32px' }}>
         {/* Logo + title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
@@ -143,32 +144,60 @@ function AuthModal({ mode, close, switchMode, onSuccess }:
           </div>
         )}
 
-        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {mode === 'signup' && (
-            <input className="url-input" style={{ background: 'rgba(8,14,26,.8)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'border-color .2s', fontFamily: 'Inter,sans-serif' }}
-              type="text" placeholder="Full Name" required value={name} onChange={e => setName(e.target.value)}
-              onFocus={e => (e.target.style.borderColor = 'rgba(34,197,94,.5)')}
-              onBlur={e => (e.target.style.borderColor = '#1a2e46')} />
-          )}
-          <input style={{ background: 'rgba(8,14,26,.8)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'border-color .2s', fontFamily: 'Inter,sans-serif', width: '100%' }}
-            type="email" placeholder="Email address" required value={email} onChange={e => setEmail(e.target.value)}
-            onFocus={e => (e.target.style.borderColor = 'rgba(34,197,94,.5)')}
-            onBlur={e => (e.target.style.borderColor = '#1a2e46')} />
-          <input style={{ background: 'rgba(8,14,26,.8)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'border-color .2s', fontFamily: 'Inter,sans-serif', width: '100%' }}
-            type="password" placeholder="Password" required value={pw} onChange={e => setPw(e.target.value)}
-            onFocus={e => (e.target.style.borderColor = 'rgba(34,197,94,.5)')}
-            onBlur={e => (e.target.style.borderColor = '#1a2e46')} />
-          <button type="submit" disabled={busy} className="btn-primary" style={{ marginTop: 4, width: '100%' }}>
-            {busy ? <Spinner /> : (mode === 'login' ? 'Sign In →' : 'Create Account →')}
-          </button>
-        </form>
+        <div style={{ display: 'flex', gap: 32 }}>
+          {/* Left Side: Form */}
+          <div style={{ flex: 1 }}>
+            <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {mode === 'signup' && (
+                <input className="url-input" style={{ background: 'rgba(8,14,26,.8)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'border-color .2s', fontFamily: 'Inter,sans-serif' }}
+                  type="text" placeholder="Full Name" required value={name} onChange={e => setName(e.target.value)}
+                  onFocus={e => (e.target.style.borderColor = 'rgba(34,197,94,.5)')}
+                  onBlur={e => (e.target.style.borderColor = '#1a2e46')} />
+              )}
+              <input style={{ background: 'rgba(8,14,26,.8)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'border-color .2s', fontFamily: 'Inter,sans-serif', width: '100%' }}
+                type="email" placeholder="Email address" required value={email} onChange={e => setEmail(e.target.value)}
+                onFocus={e => (e.target.style.borderColor = 'rgba(34,197,94,.5)')}
+                onBlur={e => (e.target.style.borderColor = '#1a2e46')} />
+              <input style={{ background: 'rgba(8,14,26,.8)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'border-color .2s', fontFamily: 'Inter,sans-serif', width: '100%' }}
+                type="password" placeholder="Password" required value={pw} onChange={e => setPw(e.target.value)}
+                onFocus={e => (e.target.style.borderColor = 'rgba(34,197,94,.5)')}
+                onBlur={e => (e.target.style.borderColor = '#1a2e46')} />
+              <button type="submit" disabled={busy} className="btn-primary" style={{ marginTop: 4, width: '100%' }}>
+                {busy ? <Spinner /> : (mode === 'login' ? 'Sign In →' : 'Create Account →')}
+              </button>
+            </form>
 
-        <p style={{ marginTop: 20, textAlign: 'center', fontSize: 13, color: '#3d5270' }}>
-          {mode === 'login' ? "Don't have an account? " : 'Already have one? '}
-          <button onClick={switchMode} style={{ background: 'none', border: 'none', color: '#22c55e', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>
-            {mode === 'login' ? 'Sign Up' : 'Sign In'}
-          </button>
-        </p>
+            <p style={{ marginTop: 20, textAlign: 'center', fontSize: 13, color: '#3d5270' }}>
+              {mode === 'login' ? "Don't have an account? " : 'Already have one? '}
+              <button type="button" onClick={switchMode} style={{ background: 'none', border: 'none', color: '#22c55e', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>
+                {mode === 'login' ? 'Sign Up' : 'Sign In'}
+              </button>
+            </p>
+          </div>
+
+          {/* Right Side: Benefits */}
+          <div style={{ flex: 1, background: 'rgba(8,14,26,.6)', borderRadius: 16, padding: 24, border: '1px solid #1a2e46' }}>
+            <h4 style={{ color: 'white', marginBottom: 16, fontSize: 15 }}>Unlock Free Pro Features</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {[
+                { i: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', t: 'Deep Analytics', d: 'Track clicks, devices & locations' },
+                { i: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101', t: 'Custom Aliases', d: 'Create branded /my-name links' },
+                { i: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', t: 'Password Protection', d: 'Secure your links instantly' },
+                { i: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', t: 'Expiration Dates', d: 'Set links to self-destruct' },
+              ].map(f => (
+                <div key={f.t} style={{ display: 'flex', gap: 12 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(34,197,94,.1)', color: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Svg d={f.i} size={14} />
+                  </div>
+                  <div>
+                    <div style={{ color: 'white', fontSize: 13, fontWeight: 700 }}>{f.t}</div>
+                    <div style={{ color: '#64748b', fontSize: 11, marginTop: 2 }}>{f.d}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </Modal>
   );
@@ -227,7 +256,7 @@ function AnalyticsModal({ close }: { close: () => void }) {
 
   return (
     <Modal close={close} wide>
-      <div style={{ padding: '36px 32px 32px', maxHeight: '90vh', overflowY: 'auto' }}>
+      <div style={{ padding: '36px 32px 32px' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 28 }}>
           <div style={{ width: 44, height: 44, borderRadius: 13, background: 'rgba(34,197,94,.1)', border: '1px solid rgba(34,197,94,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22c55e' }}>
@@ -356,7 +385,7 @@ function ThreatModal({ close }: { close: () => void }) {
 
   return (
     <Modal close={close} wide>
-      <div style={{ padding: '36px 32px 32px', maxHeight: '90vh', overflowY: 'auto' }}>
+      <div style={{ padding: '36px 32px 32px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 28 }}>
           <div style={{ width: 44, height: 44, borderRadius: 13, background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
             <Svg d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" size={22} />
@@ -477,6 +506,14 @@ export default function App() {
   const openAuth = (m: 'login' | 'signup' = 'login') => { setAuthMode(m); setShowAuth(true); };
 
   useEffect(() => {
+    // Capture Google OAuth token from URL
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get('token');
+    if (urlToken) {
+      localStorage.setItem('token', urlToken);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     const tok = localStorage.getItem('token'); if (!tok) return;
     fetch(`${API_URL}/api/me`, { headers: { Authorization: `Bearer ${tok}` } })
       .then(r => r.json())
@@ -516,7 +553,94 @@ export default function App() {
 
   const logout = () => { localStorage.removeItem('token'); setUser(null); setUrls([]); notify('Signed out'); };
 
-  const totalClicks = urls.reduce((a, u) => a + (u.click_count || 0), 0);
+  const totalClicks = urls.reduce((acc, u) => acc + (u.click_count || 0), 0);
+
+  const ShortenerUI = (
+    <div style={{ maxWidth: user ? 900 : 740, margin: user ? '0' : '0 auto', marginBottom: user ? 48 : 0 }}>
+      <div className="shortener-box">
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div className="url-row" style={{ flex: 1 }}>
+            <Svg d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" size={20} color="#253850" />
+            <input ref={inputRef} type="url" value={rawUrl} onChange={e => setRawUrl(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && shorten()}
+              placeholder="Paste your long URL here..."
+              className="url-input" style={{ fontSize: 16 }} />
+            {rawUrl && (
+              <button onClick={() => { setRawUrl(''); setShortUrl(null); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#253850', lineHeight: 1, flexShrink: 0, transition: 'color .15s' }}
+                onMouseEnter={e => ((e.target as HTMLElement).style.color = '#64748b')}
+                onMouseLeave={e => ((e.target as HTMLElement).style.color = '#253850')}>
+                <Svg d="M6 18L18 6M6 6l12 12" size={16} />
+              </button>
+            )}
+          </div>
+          <button onClick={shorten} disabled={busy || !rawUrl.trim()} className="btn-primary" style={{ borderRadius: '1.125rem', minWidth: 160 }}>
+            {busy ? <Spinner /> : <>Shorten Now <Svg d="M14 5l7 7m0 0l-7 7m7-7H3" size={18} /></>}
+          </button>
+        </div>
+      </div>
+
+      <div style={{
+        marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 13, padding: '8px 16px', borderRadius: 12,
+        transition: 'all .4s',
+        ...(aiHighlight ? { background: 'rgba(34,197,94,.1)', border: '1px solid rgba(34,197,94,.25)', color: '#4ade80', fontWeight: 700, transform: 'scale(1.04)' } : { color: '#3d5270', border: '1px solid transparent' }),
+      }}>
+        <input type="checkbox" id="ai" checked={useAi} onChange={e => { if (!user) { openAuth(); return; } setUseAi(e.target.checked); }}
+          style={{ width: 16, height: 16, accentColor: '#22c55e', cursor: 'pointer' }} />
+        <label htmlFor="ai" style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 7 }}>
+          ✨ Use AI to generate a readable, semantic slug
+        </label>
+      </div>
+
+      {user && (
+        <div style={{ marginTop: 12 }}>
+          <button onClick={() => setShowAdv(s => !s)} style={{ background: 'none', border: 'none', color: '#3d5270', fontFamily: 'Inter,sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, margin: user ? '0' : '0 auto', transition: 'color .15s' }}
+            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = '#22c55e')}
+            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = '#3d5270')}>
+            <Svg d={showAdv ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} size={14} />
+            Advanced Options
+          </button>
+          {showAdv && (
+            <div className="a-up" style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+              {[
+                { ph: 'Custom alias (e.g. my-brand)', val: alias, set: setAlias, type: 'text', ico: 'M7 20l4-16m2 16l4-16M6 9h14M4 15h14' },
+                { ph: 'Password protect', val: pw, set: setPw, type: 'password', ico: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
+                { ph: 'Expiry date', val: exp, set: setExp, type: 'datetime-local', ico: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+              ].map(f => (
+                <div key={f.ph} style={{ position: 'relative' }}>
+                  <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#253850', pointerEvents: 'none' }}>
+                    <Svg d={f.ico} size={15} />
+                  </div>
+                  <input type={f.type} placeholder={f.ph} value={f.val} onChange={e => f.set(e.target.value)}
+                    style={{ width: '100%', background: 'rgba(8,14,26,.9)', border: '1px solid #1a2e46', borderRadius: 12, padding: '10px 12px 10px 34px', color: 'white', fontSize: 13, fontFamily: 'Inter,sans-serif', outline: 'none', transition: 'border-color .2s', colorScheme: 'dark' }}
+                    onFocus={e => (e.target.style.borderColor = 'rgba(34,197,94,.5)')}
+                    onBlur={e => (e.target.style.borderColor = '#1a2e46')} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {shortUrl && (
+        <div className="a-up" style={{ marginTop: 16, padding: '14px 18px', borderRadius: 18, background: 'rgba(34,197,94,.06)', border: '1px solid rgba(34,197,94,.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(34,197,94,.6)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 5 }}>✅ Your link is ready</div>
+            <a href={shortUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#4ade80', fontWeight: 700, fontSize: 18, textDecoration: 'none', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {shortUrl}
+            </a>
+          </div>
+          <button onClick={() => copy(shortUrl)} style={{
+            flexShrink: 0, display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, fontFamily: 'Inter,sans-serif', cursor: 'pointer', transition: 'all .2s', border: `1px solid ${copied ? 'rgba(34,197,94,.35)' : 'rgba(255,255,255,.1)'}`,
+            background: copied ? 'rgba(34,197,94,.15)' : 'rgba(255,255,255,.06)',
+            color: copied ? '#4ade80' : '#94a3b8',
+          }}>
+            <Svg d={copied ? 'M5 13l4 4L19 7' : 'M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z'} size={16} />
+            {copied ? 'Copied!' : 'Copy Link'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
 
   const features = [
     {
@@ -594,9 +718,6 @@ export default function App() {
                   </div>
                   <span style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</span>
                 </div>
-                <button onClick={() => dashRef.current?.scrollIntoView({ behavior: 'smooth' })} className="btn-outline" style={{ padding: '7px 14px', fontSize: 13 }}>
-                  Dashboard
-                </button>
                 <button onClick={logout} style={{ background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)', color: '#f87171', fontFamily: 'Inter,sans-serif', fontWeight: 600, fontSize: 13, padding: '7px 14px', borderRadius: 10, cursor: 'pointer', transition: 'all .15s' }}>
                   Log out
                 </button>
@@ -612,7 +733,9 @@ export default function App() {
       </header>
 
       <main style={{ flex: 1 }}>
-        <section style={{ maxWidth: 900, margin: '0 auto', padding: '80px 32px 64px', textAlign: 'center' }} className="a-up">
+        {!user && (
+          <>
+            <section style={{ maxWidth: 900, margin: '0 auto', padding: '80px 32px 64px', textAlign: 'center' }} className="a-up">
           <div className="a-float" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 99, background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.2)', color: '#22c55e', fontSize: 12, fontWeight: 700, marginBottom: 36, letterSpacing: '.02em' }}>
             <span style={{ position: 'relative', display: 'inline-flex', width: 8, height: 8 }}>
               <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#22c55e', opacity: .75, animation: 'ping2 1.5s ease-out infinite' }} />
@@ -741,25 +864,25 @@ export default function App() {
             ))}
           </div>
         </section>
+        </>
+        )}
 
         {user && (
-          <section ref={dashRef} style={{ maxWidth: 1200, margin: '0 auto 80px', padding: '0 32px' }} className="a-up">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
+          <section ref={dashRef} style={{ maxWidth: 1200, margin: '0 auto 80px', padding: '40px 32px' }} className="a-up">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
               <div>
-                <div className="eyebrow" style={{ marginBottom: 6 }}>Your Dashboard</div>
-                <h2 style={{ color: 'white', fontWeight: 800, fontSize: 26 }}>Welcome back, {user.name?.split(' ')[0]} 👋</h2>
+                <h2 style={{ color: 'white', fontWeight: 800, fontSize: 28 }}>Dashboard</h2>
+                <div style={{ color: '#94a3b8', fontSize: 15, marginTop: 4 }}>Welcome back, {user.name?.split(' ')[0]} 👋</div>
               </div>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <button onClick={() => setShowAnalytics(true)} className="btn-ghost-green">
-                  <Svg d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" size={16} color="#4ade80" />
-                  View Analytics
-                </button>
-                <button onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setTimeout(() => inputRef.current?.focus(), 400); }} className="btn-primary" style={{ padding: '8px 20px', fontSize: 14 }}>
-                  <Svg d="M12 4v16m8-8H4" size={16} /> New Link
-                </button>
-              </div>
+              <button onClick={() => setShowAnalytics(true)} className="btn-ghost-green">
+                <Svg d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" size={16} color="#4ade80" />
+                View Analytics
+              </button>
             </div>
 
+            {ShortenerUI}
+
+            <div className="eyebrow" style={{ marginBottom: 16 }}>Overview</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
               {[
                 { l: 'Total Clicks', v: fmt(totalClicks), color: '#4ade80', bg: 'rgba(34,197,94,.07)', border: 'rgba(34,197,94,.15)', i: 'M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
@@ -777,84 +900,86 @@ export default function App() {
               ))}
             </div>
 
-            <div className="card" style={{ overflow: 'hidden' }}>
-              {urls.length > 0 ? (
-                <div style={{ overflowX: 'auto' }}>
-                  <table className="dash-table">
-                    <thead>
-                      <tr>
-                        <th>Short Link</th>
-                        <th>Original URL</th>
-                        <th style={{ textAlign: 'center' }}>Clicks</th>
-                        <th>Status</th>
-                        <th style={{ textAlign: 'center' }}>Copy</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {urls.map((u, i) => (
-                        <tr key={u.id || i}>
-                          <td>
-                            <a href={`${API_URL}/${u.short_code}`} target="_blank" rel="noopener noreferrer"
-                              style={{ color: '#22c55e', fontWeight: 700, textDecoration: 'none', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}
-                              onMouseEnter={e => (e.currentTarget.style.color = '#4ade80')}
-                              onMouseLeave={e => (e.currentTarget.style.color = '#22c55e')}>
-                              {API_URL.replace(/https?:\/\//, '')}/{u.short_code}
-                              <Svg d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" size={13} color="#3d5270" />
-                            </a>
-                          </td>
-                          <td>
-                            <span style={{ color: '#3d5270', display: 'block', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={u.original_url}>
-                              {u.original_url}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: 'center' }}>
-                            <span className="click-badge">{u.click_count ?? 0}</span>
-                          </td>
-                          <td>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                              {u.password && <span style={{ fontSize: 11, fontWeight: 700, color: '#fbbf24', background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.2)', padding: '2px 8px', borderRadius: 6 }}>🔒 Protected</span>}
-                              {u.expiry_date && <span style={{ fontSize: 11, fontWeight: 700, color: '#f87171', background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)', padding: '2px 8px', borderRadius: 6 }}>⏱ Expires</span>}
-                              {!u.password && !u.expiry_date && <span style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.2)', padding: '2px 8px', borderRadius: 6 }}>✓ Active</span>}
-                            </div>
-                          </td>
-                          <td style={{ textAlign: 'center' }}>
-                            <div style={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
-                              <button onClick={() => { navigator.clipboard.writeText(`${API_URL}/${u.short_code}`); notify('Copied!'); }} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 6 }} title="Copy">
-                                <Svg d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" size={18} />
-                              </button>
-                              <button onClick={() => setQrUrl(`${API_URL}/${u.short_code}`)} style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', padding: 6 }} title="QR Code">
-                                <Svg d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6zm3-1v1h-1v-1h1zm-1 2v1h-1v-1h1z" size={18} />
-                              </button>
-                              <button onClick={() => updateUrl(u.id, { is_active: !u.is_active })} style={{ background: 'none', border: 'none', color: u.is_active ? '#22c55e' : '#f87171', cursor: 'pointer', padding: 6 }} title={u.is_active ? 'Disable Link' : 'Enable Link'}>
-                                <Svg d="M18.364 5.636l-1.414 1.414a7 7 0 11-9.9 0L5.636 5.636a9 9 0 1012.728 0z M12 2v9" size={18} />
-                              </button>
-                              <button onClick={() => setEditingUrl(u)} style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', padding: 6 }} title="Notes">
-                                <Svg d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" size={18} />
-                              </button>
-                              <button onClick={() => deleteUrl(u.id)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: 6 }} title="Delete">
-                                <Svg d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" size={18} />
-                              </button>
-                            </div>
-                          </td>
+              <div className="eyebrow" style={{ marginTop: 40, marginBottom: 16 }}>Your Links</div>
+              <div className="card" style={{ overflow: 'hidden' }}>
+                {urls.length > 0 ? (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="dash-table">
+                      <thead>
+                        <tr>
+                          <th>Short Link</th>
+                          <th>Original URL</th>
+                          <th style={{ textAlign: 'center' }}>Clicks</th>
+                          <th>Status</th>
+                          <th style={{ textAlign: 'center' }}>Copy</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div style={{ padding: '60px 32px', textAlign: 'center' }}>
-                  <div style={{ width: 56, height: 56, borderRadius: 18, background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.15)', color: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-                    <Svg d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" size={26} />
+                      </thead>
+                      <tbody>
+                        {urls.map((u, i) => (
+                          <tr key={u.id || i}>
+                            <td>
+                              <a href={`${API_URL}/${u.short_code}`} target="_blank" rel="noopener noreferrer"
+                                style={{ color: '#22c55e', fontWeight: 700, textDecoration: 'none', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}
+                                onMouseEnter={e => (e.currentTarget.style.color = '#4ade80')}
+                                onMouseLeave={e => (e.currentTarget.style.color = '#22c55e')}>
+                                {API_URL.replace(/https?:\/\//, '')}/{u.short_code}
+                                <Svg d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" size={13} color="#3d5270" />
+                              </a>
+                            </td>
+                            <td>
+                              <span style={{ color: '#3d5270', display: 'block', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={u.original_url}>
+                                {u.original_url}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <span className="click-badge">{u.click_count ?? 0}</span>
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: 6 }}>
+                                {u.password && <span style={{ fontSize: 11, fontWeight: 700, color: '#fbbf24', background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.2)', padding: '2px 8px', borderRadius: 6 }}>🔒 Protected</span>}
+                                {u.expiry_date && <span style={{ fontSize: 11, fontWeight: 700, color: '#f87171', background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)', padding: '2px 8px', borderRadius: 6 }}>⏱ Expires</span>}
+                                {!u.password && !u.expiry_date && <span style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.2)', padding: '2px 8px', borderRadius: 6 }}>✓ Active</span>}
+                              </div>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <div style={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
+                                <button onClick={() => { navigator.clipboard.writeText(`${API_URL}/${u.short_code}`); notify('Copied!'); }} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 6 }} title="Copy">
+                                  <Svg d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" size={18} />
+                                </button>
+                                <button onClick={() => setQrUrl(`${API_URL}/${u.short_code}`)} style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', padding: 6 }} title="QR Code">
+                                  <Svg d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6zm3-1v1h-1v-1h1zm-1 2v1h-1v-1h1z" size={18} />
+                                </button>
+                                <button onClick={() => updateUrl(u.id, { is_active: !u.is_active })} style={{ background: 'none', border: 'none', color: u.is_active ? '#22c55e' : '#f87171', cursor: 'pointer', padding: 6 }} title={u.is_active ? 'Disable Link' : 'Enable Link'}>
+                                  <Svg d="M18.364 5.636l-1.414 1.414a7 7 0 11-9.9 0L5.636 5.636a9 9 0 1012.728 0z M12 2v9" size={18} />
+                                </button>
+                                <button onClick={() => setEditingUrl(u)} style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', padding: 6 }} title="Notes">
+                                  <Svg d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" size={18} />
+                                </button>
+                                <button onClick={() => deleteUrl(u.id)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: 6 }} title="Delete">
+                                  <Svg d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" size={18} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                  <div style={{ color: '#64748b', fontWeight: 600, marginBottom: 6 }}>No links yet</div>
-                  <div style={{ color: '#253850', fontSize: 13 }}>Paste a URL above to create your first intelligent link!</div>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <div style={{ padding: '60px 32px', textAlign: 'center' }}>
+                    <div style={{ width: 56, height: 56, borderRadius: 18, background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.15)', color: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                      <Svg d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" size={26} />
+                    </div>
+                    <div style={{ color: '#64748b', fontWeight: 600, marginBottom: 6 }}>No links yet</div>
+                    <div style={{ color: '#253850', fontSize: 13 }}>Paste a URL above to create your first intelligent link!</div>
+                  </div>
+                )}
+              </div>
           </section>
         )}
 
         {/* ══════════════════ FEATURES ══════════════════ */}
+        {!user && (
         <section id="features" style={{ maxWidth: 1100, margin: '0 auto 80px', padding: '0 32px' }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <div className="eyebrow" style={{ marginBottom: 12 }}>Platform Features</div>
@@ -882,6 +1007,7 @@ export default function App() {
             ))}
           </div>
         </section>
+        )}
 
 
 
