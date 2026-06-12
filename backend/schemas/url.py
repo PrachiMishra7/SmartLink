@@ -30,3 +30,6 @@ class URLResponse(BaseModel):
 class URLUpdate(BaseModel):
     is_active: Optional[bool] = None
     notes: Optional[str] = None
+
+class URLBulkCreate(BaseModel):
+    urls: list[URLCreate]

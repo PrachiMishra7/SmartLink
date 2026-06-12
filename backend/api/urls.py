@@ -11,7 +11,7 @@ from fastapi.responses import StreamingResponse
 
 from backend.database.database import get_db, SessionLocal
 from backend.database.models import URL, User, ClickLog, ThreatLog
-from backend.schemas.url import URLCreate, URLResponse, URLUpdate
+from backend.schemas.url import URLCreate, URLResponse, URLUpdate, URLBulkCreate
 from backend.api.deps import get_current_user, get_current_user_optional
 from backend.core.utils import generate_short_code
 from backend.core.security import get_password_hash, verify_password
@@ -101,6 +101,55 @@ def shorten_url(
     db.refresh(db_url)
     return db_url
 
+@router.post("/bulk", response_model=list[URLResponse], status_code=status.HTTP_201_CREATED)
+def bulk_shorten_url(
+    bulk_in: URLBulkCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if len(bulk_in.urls) > 100:
+        raise HTTPException(status_code=400, detail="Cannot shorten more than 100 URLs at once")
+
+    results = []
+    for url_in in bulk_in.urls:
+        try:
+            threat_result = is_malicious_url(str(url_in.original_url))
+            if threat_result["is_malicious"]:
+                continue 
+            
+            short_code = None
+            if url_in.custom_alias:
+                existing_alias = db.query(URL).filter(URL.custom_alias == url_in.custom_alias).first()
+                if not existing_alias:
+                    short_code = url_in.custom_alias
+            elif url_in.use_ai:
+                ai_slug = generate_ai_slug(str(url_in.original_url))
+                if ai_slug and not db.query(URL).filter(URL.short_code == ai_slug).first():
+                    short_code = ai_slug
+            
+            if not short_code:
+                short_code = generate_short_code()
+                while db.query(URL).filter(URL.short_code == short_code).first():
+                    short_code = generate_short_code()
+
+            db_url = URL(
+                original_url=str(url_in.original_url),
+                short_code=short_code,
+                custom_alias=url_in.custom_alias,
+                user_id=current_user.id,
+                password=get_password_hash(url_in.password) if url_in.password else None,
+                expiry_date=url_in.expiry_date
+            )
+            db.add(db_url)
+            results.append(db_url)
+        except Exception:
+            pass
+            
+    db.commit()
+    for r in results:
+        db.refresh(r)
+    return results
+
 @router.delete("/user/urls/{url_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_url(url_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     db_url = db.query(URL).filter(URL.id == url_id, URL.user_id == current_user.id).first()
@@ -131,6 +180,34 @@ def get_user_urls(db: Session = Depends(get_db), current_user: User = Depends(ge
     urls = db.query(URL).filter(URL.user_id == current_user.id).order_by(URL.created_at.desc()).all()
     return urls
 
+@router.get("/user/urls/{url_id}/analytics")
+def get_url_analytics(url_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from collections import Counter
+    db_url = db.query(URL).filter(URL.id == url_id, URL.user_id == current_user.id).first()
+    if not db_url:
+        raise HTTPException(status_code=404, detail="URL not found")
+
+    clicks = db.query(ClickLog).filter(ClickLog.url_id == url_id).all()
+    
+    devices = Counter([c.device or "Unknown" for c in clicks])
+    browsers = Counter([c.browser or "Unknown" for c in clicks])
+    countries = Counter([c.country or "Unknown" for c in clicks])
+    
+    daily_trend = {}
+    for c in clicks:
+        if c.timestamp:
+            day = c.timestamp.strftime("%Y-%m-%d")
+            daily_trend[day] = daily_trend.get(day, 0) + 1
+            
+    trend_list = [{"date": k, "clicks": v} for k, v in sorted(daily_trend.items())]
+    
+    return {
+        "total_clicks": len(clicks),
+        "devices": [{"name": k, "value": v} for k, v in devices.items()],
+        "browsers": [{"name": k, "value": v} for k, v in browsers.items()],
+        "countries": [{"name": k, "value": v} for k, v in countries.items()],
+        "daily_trend": trend_list
+    }
 @router.get("/qr")
 def generate_qr(data: str):
     qr = qrcode.QRCode(version=1, box_size=10, border=4)

@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { HowItWorks, SecuritySection, ComparisonTable, AnalyticsPreview, FAQ } from './Landing';
+import { DeepAnalyticsModal } from './DeepAnalyticsModal';
+import { AdminPanel } from './AdminPanel';
 
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://127.0.0.1:8000');
 
@@ -124,80 +127,65 @@ function AuthModal({ mode, close, switchMode, onSuccess }:
   };
 
   return (
-    <Modal close={close} wide>
-      <div style={{ padding: '36px 32px 32px' }}>
-        {/* Logo + title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-          <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="#22c55e" />
-            <path d="M19 4.5L10 16.5h7l-3 11L25 15.5h-7l1-11z" fill="white" />
-          </svg>
-          <div>
-            <div style={{ color: 'white', fontWeight: 800, fontSize: 17 }}>{mode === 'login' ? 'Welcome back' : 'Create your account'}</div>
-            <div style={{ color: '#3d5270', fontSize: 12, marginTop: 1 }}>SmartLink — {mode === 'login' ? 'sign in to continue' : 'free to get started'}</div>
+    <Modal close={close}>
+      <div style={{ padding: '40px 32px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 48, borderRadius: 14, background: 'rgba(34,197,94,.1)', color: '#22c55e', marginBottom: 16 }}>
+            <Svg d="M19 4.5L10 16.5h7l-3 11L25 15.5h-7l1-11z" size={24} fill />
           </div>
+          <h2 style={{ color: 'white', fontWeight: 800, fontSize: 24, marginBottom: 8 }}>
+            {mode === 'login' ? 'Welcome back' : 'Create an account'}
+          </h2>
+          <p style={{ color: '#64748b', fontSize: 14 }}>
+            {mode === 'login' ? 'Enter your details to access your dashboard.' : 'Start creating intelligent links for free.'}
+          </p>
         </div>
 
         {err && (
-          <div style={{ marginBottom: 16, padding: '10px 14px', borderRadius: 12, background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)', color: '#f87171', fontSize: 13 }}>
+          <div style={{ marginBottom: 20, padding: '12px 16px', borderRadius: 12, background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)', color: '#f87171', fontSize: 13, textAlign: 'center' }}>
             {err}
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 32 }}>
-          {/* Left Side: Form */}
-          <div style={{ flex: 1 }}>
-            <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {mode === 'signup' && (
-                <input className="url-input" style={{ background: 'rgba(8,14,26,.8)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'border-color .2s', fontFamily: 'Inter,sans-serif' }}
-                  type="text" placeholder="Full Name" required value={name} onChange={e => setName(e.target.value)}
-                  onFocus={e => (e.target.style.borderColor = 'rgba(34,197,94,.5)')}
-                  onBlur={e => (e.target.style.borderColor = '#1a2e46')} />
-              )}
-              <input style={{ background: 'rgba(8,14,26,.8)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'border-color .2s', fontFamily: 'Inter,sans-serif', width: '100%' }}
-                type="email" placeholder="Email address" required value={email} onChange={e => setEmail(e.target.value)}
-                onFocus={e => (e.target.style.borderColor = 'rgba(34,197,94,.5)')}
-                onBlur={e => (e.target.style.borderColor = '#1a2e46')} />
-              <input style={{ background: 'rgba(8,14,26,.8)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'border-color .2s', fontFamily: 'Inter,sans-serif', width: '100%' }}
-                type="password" placeholder="Password" required value={pw} onChange={e => setPw(e.target.value)}
-                onFocus={e => (e.target.style.borderColor = 'rgba(34,197,94,.5)')}
-                onBlur={e => (e.target.style.borderColor = '#1a2e46')} />
-              <button type="submit" disabled={busy} className="btn-primary" style={{ marginTop: 4, width: '100%' }}>
-                {busy ? <Spinner /> : (mode === 'login' ? 'Sign In →' : 'Create Account →')}
-              </button>
-            </form>
-
-            <p style={{ marginTop: 20, textAlign: 'center', fontSize: 13, color: '#3d5270' }}>
-              {mode === 'login' ? "Don't have an account? " : 'Already have one? '}
-              <button type="button" onClick={switchMode} style={{ background: 'none', border: 'none', color: '#22c55e', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>
-                {mode === 'login' ? 'Sign Up' : 'Sign In'}
-              </button>
-            </p>
-          </div>
-
-          {/* Right Side: Benefits */}
-          <div style={{ flex: 1, background: 'rgba(8,14,26,.6)', borderRadius: 16, padding: 24, border: '1px solid #1a2e46' }}>
-            <h4 style={{ color: 'white', marginBottom: 16, fontSize: 15 }}>Unlock Free Pro Features</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {[
-                { i: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', t: 'Deep Analytics', d: 'Track clicks, devices & locations' },
-                { i: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101', t: 'Custom Aliases', d: 'Create branded /my-name links' },
-                { i: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', t: 'Password Protection', d: 'Secure your links instantly' },
-                { i: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', t: 'Expiration Dates', d: 'Set links to self-destruct' },
-              ].map(f => (
-                <div key={f.t} style={{ display: 'flex', gap: 12 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(34,197,94,.1)', color: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Svg d={f.i} size={14} />
-                  </div>
-                  <div>
-                    <div style={{ color: 'white', fontSize: 13, fontWeight: 700 }}>{f.t}</div>
-                    <div style={{ color: '#64748b', fontSize: 11, marginTop: 2 }}>{f.d}</div>
-                  </div>
-                </div>
-              ))}
+        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {mode === 'signup' && (
+            <div>
+              <label style={{ display: 'block', color: '#94a3b8', fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Full Name</label>
+              <input style={{ width: '100%', background: 'rgba(8,14,26,.6)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'all .2s', boxSizing: 'border-box' }}
+                type="text" placeholder="John Doe" required value={name} onChange={e => setName(e.target.value)}
+                onFocus={e => { e.target.style.borderColor = 'rgba(34,197,94,.5)'; e.target.style.background = 'rgba(34,197,94,.02)'; }}
+                onBlur={e => { e.target.style.borderColor = '#1a2e46'; e.target.style.background = 'rgba(8,14,26,.6)'; }} />
             </div>
+          )}
+          <div>
+            <label style={{ display: 'block', color: '#94a3b8', fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Email Address</label>
+            <input style={{ width: '100%', background: 'rgba(8,14,26,.6)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'all .2s', boxSizing: 'border-box' }}
+              type="email" placeholder="you@example.com" required value={email} onChange={e => setEmail(e.target.value)}
+              onFocus={e => { e.target.style.borderColor = 'rgba(34,197,94,.5)'; e.target.style.background = 'rgba(34,197,94,.02)'; }}
+              onBlur={e => { e.target.style.borderColor = '#1a2e46'; e.target.style.background = 'rgba(8,14,26,.6)'; }} />
           </div>
-        </div>
+          <div>
+            <label style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+              Password
+              {mode === 'login' && <span style={{ color: '#22c55e', cursor: 'pointer' }} onClick={() => alert('Forgot password flow coming soon!')}>Forgot?</span>}
+            </label>
+            <input style={{ width: '100%', background: 'rgba(8,14,26,.6)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'all .2s', boxSizing: 'border-box' }}
+              type="password" placeholder="••••••••" required value={pw} onChange={e => setPw(e.target.value)}
+              onFocus={e => { e.target.style.borderColor = 'rgba(34,197,94,.5)'; e.target.style.background = 'rgba(34,197,94,.02)'; }}
+              onBlur={e => { e.target.style.borderColor = '#1a2e46'; e.target.style.background = 'rgba(8,14,26,.6)'; }} />
+          </div>
+          
+          <button type="submit" disabled={busy} className="btn-primary" style={{ marginTop: 8, padding: '14px', fontSize: 15, width: '100%' }}>
+            {busy ? <Spinner /> : (mode === 'login' ? 'Sign In' : 'Create Account')}
+          </button>
+        </form>
+
+        <p style={{ marginTop: 24, textAlign: 'center', fontSize: 13, color: '#64748b' }}>
+          {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+          <button type="button" onClick={switchMode} style={{ background: 'none', border: 'none', color: '#22c55e', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>
+            {mode === 'login' ? 'Sign up for free' : 'Sign in instead'}
+          </button>
+        </p>
       </div>
     </Modal>
   );
@@ -497,7 +485,35 @@ export default function App() {
   const [showAuth, setShowAuth] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showThreat, setShowThreat] = useState(false);
+  const [deepAnalyticsUrl, setDeepAnalyticsUrl] = useState<any>(null);
+  const [showBulk, setShowBulk] = useState(false);
+  const [bulkText, setBulkText] = useState('');
+  const [bulkBusy, setBulkBusy] = useState(false);
 
+  const handleBulkSubmit = async () => {
+    const lines = bulkText.split('\n').map(l => l.trim()).filter(l => l);
+    if (!lines.length) return notify('No URLs found', false);
+    if (lines.length > 100) return notify('Max 100 URLs at a time', false);
+    setBulkBusy(true);
+    try {
+      const tok = localStorage.getItem('token');
+      const payload = { urls: lines.map(l => {
+        const parts = l.split(',');
+        return { original_url: parts[0].trim(), custom_alias: parts[1] ? parts[1].trim() : undefined, use_ai: useAi };
+      })};
+      const r = await fetch(`${API_URL}/api/urls/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
+        body: JSON.stringify(payload)
+      });
+      if (!r.ok) throw new Error('Bulk shortening failed');
+      const res = await r.json();
+      setUrls(prev => [...res, ...prev]);
+      notify(`Successfully shortened ${res.length} URLs! 🎉`);
+      setShowBulk(false);
+      setBulkText('');
+    } catch (e: any) { notify(e.message, false); } finally { setBulkBusy(false); }
+  };
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const dashRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -555,92 +571,7 @@ export default function App() {
 
   const totalClicks = urls.reduce((acc, u) => acc + (u.click_count || 0), 0);
 
-  const ShortenerUI = (
-    <div style={{ maxWidth: user ? 900 : 740, margin: user ? '0' : '0 auto', marginBottom: user ? 48 : 0 }}>
-      <div className="shortener-box">
-        <div style={{ display: 'flex', gap: 8 }}>
-          <div className="url-row" style={{ flex: 1 }}>
-            <Svg d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" size={20} color="#253850" />
-            <input ref={inputRef} type="url" value={rawUrl} onChange={e => setRawUrl(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && shorten()}
-              placeholder="Paste your long URL here..."
-              className="url-input" style={{ fontSize: 16 }} />
-            {rawUrl && (
-              <button onClick={() => { setRawUrl(''); setShortUrl(null); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#253850', lineHeight: 1, flexShrink: 0, transition: 'color .15s' }}
-                onMouseEnter={e => ((e.target as HTMLElement).style.color = '#64748b')}
-                onMouseLeave={e => ((e.target as HTMLElement).style.color = '#253850')}>
-                <Svg d="M6 18L18 6M6 6l12 12" size={16} />
-              </button>
-            )}
-          </div>
-          <button onClick={shorten} disabled={busy || !rawUrl.trim()} className="btn-primary" style={{ borderRadius: '1.125rem', minWidth: 160 }}>
-            {busy ? <Spinner /> : <>Shorten Now <Svg d="M14 5l7 7m0 0l-7 7m7-7H3" size={18} /></>}
-          </button>
-        </div>
-      </div>
 
-      <div style={{
-        marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 13, padding: '8px 16px', borderRadius: 12,
-        transition: 'all .4s',
-        ...(aiHighlight ? { background: 'rgba(34,197,94,.1)', border: '1px solid rgba(34,197,94,.25)', color: '#4ade80', fontWeight: 700, transform: 'scale(1.04)' } : { color: '#3d5270', border: '1px solid transparent' }),
-      }}>
-        <input type="checkbox" id="ai" checked={useAi} onChange={e => { if (!user) { openAuth(); return; } setUseAi(e.target.checked); }}
-          style={{ width: 16, height: 16, accentColor: '#22c55e', cursor: 'pointer' }} />
-        <label htmlFor="ai" style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 7 }}>
-          ✨ Use AI to generate a readable, semantic slug
-        </label>
-      </div>
-
-      {user && (
-        <div style={{ marginTop: 12 }}>
-          <button onClick={() => setShowAdv(s => !s)} style={{ background: 'none', border: 'none', color: '#3d5270', fontFamily: 'Inter,sans-serif', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, margin: user ? '0' : '0 auto', transition: 'color .15s' }}
-            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = '#22c55e')}
-            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = '#3d5270')}>
-            <Svg d={showAdv ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} size={14} />
-            Advanced Options
-          </button>
-          {showAdv && (
-            <div className="a-up" style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
-              {[
-                { ph: 'Custom alias (e.g. my-brand)', val: alias, set: setAlias, type: 'text', ico: 'M7 20l4-16m2 16l4-16M6 9h14M4 15h14' },
-                { ph: 'Password protect', val: pw, set: setPw, type: 'password', ico: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
-                { ph: 'Expiry date', val: exp, set: setExp, type: 'datetime-local', ico: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
-              ].map(f => (
-                <div key={f.ph} style={{ position: 'relative' }}>
-                  <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#253850', pointerEvents: 'none' }}>
-                    <Svg d={f.ico} size={15} />
-                  </div>
-                  <input type={f.type} placeholder={f.ph} value={f.val} onChange={e => f.set(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(8,14,26,.9)', border: '1px solid #1a2e46', borderRadius: 12, padding: '10px 12px 10px 34px', color: 'white', fontSize: 13, fontFamily: 'Inter,sans-serif', outline: 'none', transition: 'border-color .2s', colorScheme: 'dark' }}
-                    onFocus={e => (e.target.style.borderColor = 'rgba(34,197,94,.5)')}
-                    onBlur={e => (e.target.style.borderColor = '#1a2e46')} />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {shortUrl && (
-        <div className="a-up" style={{ marginTop: 16, padding: '14px 18px', borderRadius: 18, background: 'rgba(34,197,94,.06)', border: '1px solid rgba(34,197,94,.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(34,197,94,.6)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 5 }}>✅ Your link is ready</div>
-            <a href={shortUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#4ade80', fontWeight: 700, fontSize: 18, textDecoration: 'none', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {shortUrl}
-            </a>
-          </div>
-          <button onClick={() => copy(shortUrl)} style={{
-            flexShrink: 0, display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, fontFamily: 'Inter,sans-serif', cursor: 'pointer', transition: 'all .2s', border: `1px solid ${copied ? 'rgba(34,197,94,.35)' : 'rgba(255,255,255,.1)'}`,
-            background: copied ? 'rgba(34,197,94,.15)' : 'rgba(255,255,255,.06)',
-            color: copied ? '#4ade80' : '#94a3b8',
-          }}>
-            <Svg d={copied ? 'M5 13l4 4L19 7' : 'M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z'} size={16} />
-            {copied ? 'Copied!' : 'Copy Link'}
-          </button>
-        </div>
-      )}
-    </div>
-  );
 
   const features = [
     {
@@ -675,39 +606,45 @@ export default function App() {
     },
   ];
 
+  if (window.location.pathname === '/admin') {
+    return <AdminPanel API_URL={API_URL} />;
+  }
+
   return (
     <>
       <div className="page-bg"><div className="grid-bg" /></div>
 
-      <header className="navbar">
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-              <rect width="32" height="32" rx="8" fill="#22c55e" />
-              <path d="M19 4.5L10 16.5h7l-3 11L25 15.5h-7l1-11z" fill="white" />
-            </svg>
-            <span style={{ fontSize: 18, fontWeight: 800, color: 'white' }}>
-              Smart<span style={{ color: '#22c55e' }}>Link</span>
-            </span>
-            <span style={{ fontSize: 9, fontWeight: 800, color: '#22c55e', border: '1px solid rgba(34,197,94,.25)', background: 'rgba(34,197,94,.08)', padding: '2px 7px', borderRadius: 6, letterSpacing: '0.1em' }}>BETA</span>
+      <header style={{ padding: '20px 32px', borderBottom: '1px solid rgba(26,46,70,.6)', position: 'sticky', top: 0, zIndex: 100, background: 'rgba(8,14,26,.6)', backdropFilter: 'blur(24px)' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 40 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => window.scrollTo(0, 0)}>
+              <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="8" fill="#22c55e" />
+                <path d="M19 4.5L10 16.5h7l-3 11L25 15.5h-7l1-11z" fill="white" />
+              </svg>
+              <span style={{ color: 'white', fontWeight: 800, fontSize: 18, letterSpacing: '-.02em' }}>SmartLink</span>
+            </div>
+            
+            <nav style={{ display: 'flex', gap: 8 }} className="hide-mobile">
+              {[
+                { label: 'Home', action: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
+                { label: 'Features', action: () => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }) },
+                { label: 'How it Works', action: () => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' }) },
+                { label: 'Analytics', action: () => { if (user) setShowAnalytics(true); else openAuth('login'); } },
+                { label: 'Pricing', action: () => { /* optional notify or do nothing */ } },
+              ].map(n => (
+                <button key={n.label} onClick={n.action} style={{
+                  background: 'none', border: 'none', color: '#64748b', fontFamily: 'Inter,sans-serif',
+                  fontWeight: 600, fontSize: 14, padding: '8px 14px', borderRadius: 10, cursor: 'pointer',
+                  transition: 'all .15s',
+                }}
+                  onMouseEnter={e => { (e.target as HTMLElement).style.color = 'white'; (e.target as HTMLElement).style.background = 'rgba(255,255,255,.05)'; }}
+                  onMouseLeave={e => { (e.target as HTMLElement).style.color = '#64748b'; (e.target as HTMLElement).style.background = 'none'; }}>
+                  {n.label}
+                </button>
+              ))}
+            </nav>
           </div>
-
-          <nav style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            {[
-              { label: 'Features', onClick: () => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }) },
-              { label: 'Analytics', onClick: () => setShowAnalytics(true) },
-            ].map(n => (
-              <button key={n.label} onClick={n.onClick} style={{
-                background: 'none', border: 'none', color: '#64748b', fontFamily: 'Inter,sans-serif',
-                fontWeight: 600, fontSize: 14, padding: '8px 14px', borderRadius: 10, cursor: 'pointer',
-                transition: 'all .15s',
-              }}
-                onMouseEnter={e => { (e.target as HTMLElement).style.color = 'white'; (e.target as HTMLElement).style.background = 'rgba(255,255,255,.05)'; }}
-                onMouseLeave={e => { (e.target as HTMLElement).style.color = '#64748b'; (e.target as HTMLElement).style.background = 'none'; }}>
-                {n.label}
-              </button>
-            ))}
-          </nav>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
             {user ? (
@@ -718,6 +655,11 @@ export default function App() {
                   </div>
                   <span style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</span>
                 </div>
+                {user.role === 'admin' && (
+                  <button onClick={() => window.location.href = '/admin'} style={{ background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.2)', color: '#fbbf24', fontFamily: 'Inter,sans-serif', fontWeight: 600, fontSize: 13, padding: '7px 14px', borderRadius: 10, cursor: 'pointer', transition: 'all .15s', marginRight: 8 }}>
+                    Admin Panel
+                  </button>
+                )}
                 <button onClick={logout} style={{ background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)', color: '#f87171', fontFamily: 'Inter,sans-serif', fontWeight: 600, fontSize: 13, padding: '7px 14px', borderRadius: 10, cursor: 'pointer', transition: 'all .15s' }}>
                   Log out
                 </button>
@@ -735,25 +677,40 @@ export default function App() {
       <main style={{ flex: 1 }}>
         {!user && (
           <>
-            <section style={{ maxWidth: 900, margin: '0 auto', padding: '80px 32px 64px', textAlign: 'center' }} className="a-up">
-          <div className="a-float" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 99, background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.2)', color: '#22c55e', fontSize: 12, fontWeight: 700, marginBottom: 36, letterSpacing: '.02em' }}>
-            <span style={{ position: 'relative', display: 'inline-flex', width: 8, height: 8 }}>
-              <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#22c55e', opacity: .75, animation: 'ping2 1.5s ease-out infinite' }} />
-              <span style={{ position: 'relative', width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
-            </span>
-            AI-Powered URL Shortening is Live
-            <style>{`@keyframes ping2{0%{transform:scale(1);opacity:.75}100%{transform:scale(2.2);opacity:0}}`}</style>
-          </div>
+            <section style={{ maxWidth: 900, margin: '0 auto', padding: '80px 32px 64px', textAlign: 'center', position: 'relative' }} className="a-up">
+              <div style={{ position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)', width: 600, height: 400, background: 'radial-gradient(ellipse at center, rgba(34,197,94,0.12) 0%, transparent 60%)', pointerEvents: 'none', zIndex: -1 }} />
+              
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 32, marginBottom: 36 }}>
+                {[
+                  { n: stats.links_shortened.toLocaleString(), l: 'Links Created' },
+                  { n: stats.active_users.toLocaleString(), l: 'Active Users' },
+                  { n: '99.9%', l: 'Safe Links' },
+                ].map(s => (
+                  <div key={s.l} style={{ textAlign: 'center' }}>
+                    <div style={{ color: 'white', fontWeight: 900, fontSize: 20 }}>{s.n}</div>
+                    <div style={{ color: '#64748b', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>{s.l}</div>
+                  </div>
+                ))}
+              </div>
 
-          <h1 style={{ fontSize: 'clamp(42px,7vw,76px)', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.03em', marginBottom: 24 }}>
-            <span className="gt-white">Intelligent Links for<br />a </span>
-            <span className="gt-green">Smarter Web</span>
-          </h1>
+              <div className="a-float" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 99, background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.2)', color: '#22c55e', fontSize: 12, fontWeight: 700, marginBottom: 36, letterSpacing: '.02em' }}>
+                <span style={{ position: 'relative', display: 'inline-flex', width: 8, height: 8 }}>
+                  <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#22c55e', opacity: .75, animation: 'ping2 1.5s ease-out infinite' }} />
+                  <span style={{ position: 'relative', width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
+                </span>
+                AI-Powered URL Shortening is Live
+                <style>{`@keyframes ping2{0%{transform:scale(1);opacity:.75}100%{transform:scale(2.2);opacity:0}}`}</style>
+              </div>
 
-          <p style={{ fontSize: 18, color: '#4b6a8a', lineHeight: 1.75, maxWidth: 560, margin: '0 auto 48px' }}>
-            More than just a URL shortener. Generate AI-powered slugs, detect malicious links,
-            and unlock deep analytics — all in one premium platform.
-          </p>
+              <h1 style={{ fontSize: 'clamp(42px,7vw,76px)', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.03em', marginBottom: 24 }}>
+                <span className="gt-white">Effortless Links,<br /></span>
+                <span className="gt-green">Infinite Possibilities</span>
+              </h1>
+
+              <p style={{ fontSize: 18, color: '#4b6a8a', lineHeight: 1.75, maxWidth: 560, margin: '0 auto 48px' }}>
+                Create clean, branded links with AI-optimized slugs, gain deep traffic insights,
+                and protect your audience from threats with enterprise-grade security.
+              </p>
 
           <div style={{ maxWidth: 740, margin: '0 auto' }}>
             <div className="shortener-box">
@@ -778,16 +735,35 @@ export default function App() {
               </div>
             </div>
 
-            <div style={{
-              marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 13, padding: '8px 16px', borderRadius: 12,
-              transition: 'all .4s',
-              ...(aiHighlight ? { background: 'rgba(34,197,94,.1)', border: '1px solid rgba(34,197,94,.25)', color: '#4ade80', fontWeight: 700, transform: 'scale(1.04)' } : { color: '#3d5270', border: '1px solid transparent' }),
+            <div onClick={() => { if (!user) { openAuth(); return; } setUseAi(!useAi); }} style={{
+              marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 14, fontSize: 16, padding: '14px 28px', borderRadius: 20,
+              transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'pointer',
+              background: useAi ? 'linear-gradient(145deg, rgba(34,197,94,0.15), rgba(16,185,129,0.25))' : 'rgba(15,23,42,0.6)',
+              border: `1px solid ${useAi ? 'rgba(34,197,94,.6)' : 'rgba(51,65,85,.5)'}`,
+              boxShadow: useAi ? '0 0 30px rgba(34,197,94,.3), inset 0 0 20px rgba(34,197,94,.1)' : '0 4px 12px rgba(0,0,0,0.1)',
+              ...(aiHighlight ? { transform: 'scale(1.05)', borderColor: '#4ade80' } : {}),
             }}>
-              <input type="checkbox" id="ai" checked={useAi} onChange={e => { if (!user) { openAuth(); return; } setUseAi(e.target.checked); }}
-                style={{ width: 16, height: 16, accentColor: '#22c55e', cursor: 'pointer' }} />
-              <label htmlFor="ai" style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 7 }}>
-                ✨ Use AI to generate a readable, semantic slug
-              </label>
+              <div style={{
+                width: 44, height: 24, borderRadius: 12, background: useAi ? '#22c55e' : '#334155', position: 'relative',
+                transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)', display: 'flex', alignItems: 'center', padding: 2
+              }}>
+                <div style={{
+                  width: 20, height: 20, borderRadius: 10, background: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                  transform: `translateX(${useAi ? 20 : 0}px)`, transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                  {useAi && <Svg d="M5 13l4 4L19 7" size={12} color="#22c55e" />}
+                </div>
+              </div>
+              <span style={{ 
+                userSelect: 'none', 
+                color: useAi ? '#4ade80' : '#cbd5e1', 
+                fontWeight: useAi ? 800 : 500,
+                textShadow: useAi ? '0 0 10px rgba(74,222,128,0.5)' : 'none',
+                letterSpacing: '.02em'
+              }}>
+                ✨ Enable AI Semantic Slug
+              </span>
             </div>
 
             {user && (
@@ -838,32 +814,30 @@ export default function App() {
                 </button>
               </div>
             )}
-          </div>
+              {shortUrl && !user && (
+                <div className="a-up" style={{ marginTop: 16, padding: '24px', borderRadius: 18, background: 'linear-gradient(145deg, rgba(34,197,94,0.1), rgba(12,21,38,0.8))', border: '1px solid rgba(34,197,94,.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20 }}>
+                  <div>
+                    <h3 style={{ color: 'white', fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Unlock Analytics & AI Features</h3>
+                    <p style={{ color: '#94a3b8', fontSize: 13 }}>Create a free account to track clicks, locations, and edit this link anytime.</p>
+                  </div>
+                  <button onClick={() => openAuth('signup')} className="btn-primary" style={{ padding: '10px 20px', fontSize: 13, flexShrink: 0 }}>
+                    Sign In to Unlock
+                  </button>
+                </div>
+              )}
+            </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px 32px', marginTop: 28, fontSize: 12, color: '#253850' }}>
-            {['No account required', 'SSL encrypted', '99.9% uptime', 'GDPR compliant', '90+ threat databases'].map(t => (
-              <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Svg d="M5 13l4 4L19 7" size={12} color="rgba(34,197,94,.5)" /> {t}
-              </span>
-            ))}
-          </div>
-        </section>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 40 }}>
+              <button onClick={() => openAuth('signup')} className="btn-primary" style={{ padding: '14px 32px', fontSize: 16 }}>Get Started Free</button>
+            </div>
+          </section>
 
-        <section style={{ maxWidth: 900, margin: '0 auto 64px', padding: '0 32px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14 }}>
-            {[
-              { n: stats.links_shortened.toLocaleString(), l: 'Links Shortened' }, 
-              { n: stats.active_users.toLocaleString(), l: 'Active Users' }, 
-              { n: '99.9%', l: 'Uptime SLA' }, 
-              { n: '90+', l: 'Threat DBs' }
-            ].map(s => (
-              <div key={s.l} className="card" style={{ padding: '22px 20px', textAlign: 'center' }}>
-                <div className="gt-green" style={{ fontSize: 32, fontWeight: 900, marginBottom: 4 }}>{s.n}</div>
-                <div style={{ fontSize: 12, color: '#3d5270', fontWeight: 600 }}>{s.l}</div>
-              </div>
-            ))}
-          </div>
-        </section>
+          {/* New Landing Page Sections */}
+          <HowItWorks />
+          <AnalyticsPreview openAuth={() => openAuth('signup')} />
+          <SecuritySection />
+          <ComparisonTable />
+          <FAQ />
         </>
         )}
 
@@ -874,13 +848,61 @@ export default function App() {
                 <h2 style={{ color: 'white', fontWeight: 800, fontSize: 28 }}>Dashboard</h2>
                 <div style={{ color: '#94a3b8', fontSize: 15, marginTop: 4 }}>Welcome back, {user.name?.split(' ')[0]} 👋</div>
               </div>
-              <button onClick={() => setShowAnalytics(true)} className="btn-ghost-green">
-                <Svg d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" size={16} color="#4ade80" />
-                View Analytics
-              </button>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => setShowBulk(true)} className="btn-outline" style={{ padding: '8px 16px', fontSize: 13, borderColor: 'rgba(255,255,255,.1)' }}>
+                  <Svg d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" size={16} />
+                  Bulk Upload
+                </button>
+                <button onClick={() => setShowAnalytics(true)} className="btn-ghost-green">
+                  <Svg d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" size={16} color="#4ade80" />
+                  View Analytics
+                </button>
+              </div>
             </div>
 
-            {ShortenerUI}
+            {/* Quick Create Bar */}
+            <div className="card" style={{ padding: 24, marginBottom: 40, border: '1px solid rgba(34,197,94,.2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(8,14,26,.6)', border: '1px solid #1a2e46', borderRadius: 14, padding: '10px 16px', transition: 'border-color .2s' }}>
+                  <Svg d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" size={18} color="#94a3b8" />
+                  <input ref={inputRef} type="url" value={rawUrl} onChange={e => setRawUrl(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && shorten()}
+                    placeholder="Paste a long URL to shorten..."
+                    style={{ background: 'transparent', border: 'none', color: 'white', fontSize: 15, outline: 'none', width: '100%' }} />
+                </div>
+                <button onClick={shorten} disabled={busy || !rawUrl.trim()} className="btn-primary" style={{ padding: '12px 24px', fontSize: 15, borderRadius: 12 }}>
+                  {busy ? <Spinner /> : 'Shorten'}
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none', color: useAi ? '#4ade80' : '#94a3b8', fontSize: 14, fontWeight: useAi ? 600 : 500 }}
+                  onClick={() => setUseAi(!useAi)}>
+                  <div style={{ width: 16, height: 16, borderRadius: 4, border: `1px solid ${useAi ? '#4ade80' : '#3d5270'}`, background: useAi ? '#22c55e' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {useAi && <Svg d="M5 13l4 4L19 7" size={12} color="white" />}
+                  </div>
+                  ✨ AI Semantic Slug
+                </div>
+                
+                <button onClick={() => setShowAdv(!showAdv)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'white')}
+                  onMouseLeave={e => (e.currentTarget.style.color = '#64748b')}>
+                  <Svg d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" size={14} />
+                  Advanced Options
+                </button>
+              </div>
+
+              {showAdv && (
+                <div className="a-down" style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,.05)', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
+                  <input type="text" placeholder="Custom alias" value={alias} onChange={e => setAlias(e.target.value)}
+                    style={{ background: 'rgba(8,14,26,.6)', border: '1px solid #1a2e46', borderRadius: 10, padding: '10px 14px', color: 'white', fontSize: 13, outline: 'none' }} />
+                  <input type="password" placeholder="Password protect" value={pw} onChange={e => setPw(e.target.value)}
+                    style={{ background: 'rgba(8,14,26,.6)', border: '1px solid #1a2e46', borderRadius: 10, padding: '10px 14px', color: 'white', fontSize: 13, outline: 'none' }} />
+                  <input type="datetime-local" value={exp} onChange={e => setExp(e.target.value)}
+                    style={{ background: 'rgba(8,14,26,.6)', border: '1px solid #1a2e46', borderRadius: 10, padding: '10px 14px', color: 'white', fontSize: 13, outline: 'none', colorScheme: 'dark' }} />
+                </div>
+              )}
+            </div>
 
             <div className="eyebrow" style={{ marginBottom: 16 }}>Overview</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
@@ -954,6 +976,9 @@ export default function App() {
                                 </button>
                                 <button onClick={() => setEditingUrl(u)} style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', padding: 6 }} title="Notes">
                                   <Svg d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" size={18} />
+                                </button>
+                                <button onClick={() => setDeepAnalyticsUrl(u)} style={{ background: 'none', border: 'none', color: '#c084fc', cursor: 'pointer', padding: 6 }} title="Deep Analytics">
+                                  <Svg d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" size={18} />
                                 </button>
                                 <button onClick={() => deleteUrl(u.id)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: 6 }} title="Delete">
                                   <Svg d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" size={18} />
@@ -1033,29 +1058,61 @@ export default function App() {
       </main>
 
       {/* ══════════════════ FOOTER ══════════════════ */}
-      <footer style={{ borderTop: '1px solid rgba(26,46,70,.6)', padding: '32px', marginTop: 'auto' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
-              <rect width="32" height="32" rx="8" fill="#22c55e" />
-              <path d="M19 4.5L10 16.5h7l-3 11L25 15.5h-7l1-11z" fill="white" />
-            </svg>
-            <span style={{ color: '#64748b', fontWeight: 600, fontSize: 14 }}>SmartLink</span>
-            <span style={{ color: '#253850', fontSize: 13 }}>© {new Date().getFullYear()}</span>
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
-            {['Privacy Policy', 'Terms', 'API Docs', 'Status', 'Support'].map(l => (
-              <button key={l} onClick={() => notify(`${l} coming soon in v1.0`)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#253850', fontSize: 13, textDecoration: 'none', transition: 'color .15s', fontFamily: 'Inter,sans-serif' }}
-                onMouseEnter={e => ((e.target as HTMLElement).style.color = '#64748b')}
-                onMouseLeave={e => ((e.target as HTMLElement).style.color = '#253850')}>{l}</button>
+      <footer style={{ borderTop: '1px solid rgba(26,46,70,.6)', padding: '64px 32px 32px', marginTop: 'auto', background: 'rgba(8,14,26,.6)', position: 'relative', zIndex: 10 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 48, marginBottom: 64 }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+                <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+                  <rect width="32" height="32" rx="8" fill="#22c55e" />
+                  <path d="M19 4.5L10 16.5h7l-3 11L25 15.5h-7l1-11z" fill="white" />
+                </svg>
+                <span style={{ color: 'white', fontWeight: 800, fontSize: 16 }}>SmartLink</span>
+              </div>
+              <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.6, marginBottom: 24 }}>
+                The intelligent URL shortener with built-in analytics, AI slugs, and enterprise threat detection.
+              </p>
+              <div style={{ display: 'flex', gap: 12 }}>
+                {['Twitter', 'GitHub', 'Discord'].map(s => (
+                  <button key={s} style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,.05)', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.1)'; (e.currentTarget as HTMLElement).style.color = 'white'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.05)'; (e.currentTarget as HTMLElement).style.color = '#94a3b8'; }}>
+                    {s[0]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {[
+              { title: 'Product', links: ['Features', 'Analytics', 'Threat Detection', 'Pricing', 'Changelog'] },
+              { title: 'Resources', links: ['Documentation', 'API Reference', 'Blog', 'Community', 'Help Center'] },
+              { title: 'Company', links: ['About Us', 'Careers', 'Legal', 'Privacy Policy', 'Terms of Service'] }
+            ].map(col => (
+              <div key={col.title}>
+                <h4 style={{ color: 'white', fontWeight: 700, fontSize: 15, marginBottom: 20 }}>{col.title}</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {col.links.map(l => (
+                    <a key={l} href="#" onClick={e => { e.preventDefault(); notify(`${l} coming soon in v1.0`); }}
+                      style={{ color: '#64748b', textDecoration: 'none', fontSize: 14, transition: 'color .2s' }}
+                      onMouseEnter={e => ((e.target as HTMLElement).style.color = '#4ade80')}
+                      onMouseLeave={e => ((e.target as HTMLElement).style.color = '#64748b')}>
+                      {l}
+                    </a>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: '#253850' }}>
-            <span style={{ position: 'relative', display: 'inline-flex', width: 8, height: 8 }}>
-              <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#22c55e', opacity: .7, animation: 'ping2 1.5s ease-out infinite' }} />
-              <span style={{ position: 'relative', width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
-            </span>
-            All systems operational
+
+          <div style={{ paddingTop: 32, borderTop: '1px solid rgba(255,255,255,.05)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 20 }}>
+            <span style={{ color: '#4b6a8a', fontSize: 13 }}>© {new Date().getFullYear()} SmartLink Inc. All rights reserved.</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#4b6a8a', padding: '6px 12px', background: 'rgba(34,197,94,.05)', borderRadius: 20, border: '1px solid rgba(34,197,94,.1)' }}>
+              <span style={{ position: 'relative', display: 'inline-flex', width: 8, height: 8 }}>
+                <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#22c55e', opacity: .7, animation: 'ping2 1.5s ease-out infinite' }} />
+                <span style={{ position: 'relative', width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
+              </span>
+              All systems operational
+            </div>
           </div>
         </div>
       </footer>
@@ -1098,7 +1155,26 @@ export default function App() {
           </div>
         </Modal>
       )}
+      {showBulk && (
+        <Modal close={() => setShowBulk(false)}>
+          <div style={{ padding: 32 }}>
+            <h3 style={{ color: 'white', marginBottom: 12 }}>Bulk Upload URLs</h3>
+            <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 20 }}>Paste your long URLs below, one per line. Optionally, add a custom alias separated by a comma (e.g., `https://example.com, my-alias`). Max 100.</p>
+            <textarea value={bulkText} onChange={e => setBulkText(e.target.value)} placeholder="https://google.com&#10;https://example.com, my-example"
+              style={{ width: '100%', height: 200, background: 'rgba(4,8,15,.6)', border: '1px solid #1a2e46', borderRadius: 12, padding: 16, color: 'white', fontFamily: 'monospace', fontSize: 13, resize: 'none', marginBottom: 20, outline: 'none' }}
+              onFocus={e => (e.target.style.borderColor = '#22c55e')}
+              onBlur={e => (e.target.style.borderColor = '#1a2e46')} />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <button onClick={() => setShowBulk(false)} className="btn-outline" style={{ padding: '10px 20px', fontSize: 14 }}>Cancel</button>
+              <button onClick={handleBulkSubmit} disabled={bulkBusy || !bulkText.trim()} className="btn-primary" style={{ padding: '10px 20px', fontSize: 14 }}>
+                {bulkBusy ? <Spinner /> : 'Shorten All'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
       {showAnalytics && <AnalyticsModal close={() => setShowAnalytics(false)} />}
+      {deepAnalyticsUrl && <DeepAnalyticsModal url={deepAnalyticsUrl} close={() => setDeepAnalyticsUrl(null)} API_URL={API_URL} />}
       {showThreat && <ThreatModal close={() => setShowThreat(false)} />}
       {toast && <Toast msg={toast.msg} ok={toast.ok} close={() => setToast(null)} />}
     </>

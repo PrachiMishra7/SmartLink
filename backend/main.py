@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from backend.core.config import settings
-from backend.api import auth, urls
+from backend.api import auth, urls, admin
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -21,6 +21,7 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/api", tags=["authentication"])
 app.include_router(urls.router, prefix="/api/urls", tags=["urls"])
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 
 import os
 from fastapi import BackgroundTasks
