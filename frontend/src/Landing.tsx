@@ -64,48 +64,6 @@ export function SecuritySection() {
   );
 }
 
-export function ComparisonTable() {
-  const rows = [
-    { f: 'AI Slugs', me: true, them: false },
-    { f: 'Malicious Detection', me: true, them: false },
-    { f: 'QR Download', me: true, them: true },
-    { f: 'Smart Analytics', me: true, them: 'Limited' },
-    { f: 'Password Protection', me: true, them: false },
-  ];
-  return (
-    <section style={{ maxWidth: 900, margin: '0 auto 80px', padding: '0 32px' }}>
-      <div style={{ textAlign: 'center', marginBottom: 48 }}>
-        <div className="eyebrow" style={{ marginBottom: 12 }}>Compare</div>
-        <h2 className="gt-white" style={{ fontSize: 38, fontWeight: 900, marginBottom: 14 }}>Why Choose SmartLink AI</h2>
-      </div>
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead>
-            <tr style={{ background: 'rgba(255,255,255,.03)', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
-              <th style={{ padding: '20px 24px', color: '#94a3b8', fontWeight: 600, fontSize: 13, textTransform: 'uppercase', letterSpacing: '.05em' }}>Feature</th>
-              <th style={{ padding: '20px 24px', color: '#22c55e', fontWeight: 800, fontSize: 15, textAlign: 'center', borderLeft: '1px solid rgba(255,255,255,.06)', borderRight: '1px solid rgba(255,255,255,.06)', background: 'rgba(34,197,94,.05)' }}>SmartLink</th>
-              <th style={{ padding: '20px 24px', color: '#64748b', fontWeight: 600, fontSize: 15, textAlign: 'center' }}>Bitly / Others</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={r.f} style={{ borderBottom: i < rows.length-1 ? '1px solid rgba(255,255,255,.04)' : 'none' }}>
-                <td style={{ padding: '20px 24px', color: 'white', fontWeight: 600, fontSize: 15 }}>{r.f}</td>
-                <td style={{ padding: '20px 24px', textAlign: 'center', borderLeft: '1px solid rgba(255,255,255,.06)', borderRight: '1px solid rgba(255,255,255,.06)', background: 'rgba(34,197,94,.02)' }}>
-                  {r.me === true ? <Svg d="M5 13l4 4L19 7" size={22} color="#22c55e" /> : <span style={{ color: '#22c55e', fontWeight: 700 }}>{r.me}</span>}
-                </td>
-                <td style={{ padding: '20px 24px', textAlign: 'center', color: '#64748b' }}>
-                  {r.them === true ? <Svg d="M5 13l4 4L19 7" size={20} /> : (r.them === false ? <Svg d="M6 18L18 6M6 6l12 12" size={20} color="#ef4444" /> : <span style={{ fontWeight: 600 }}>{r.them}</span>)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
 export function AnalyticsPreview({ openAuth }: { openAuth: () => void }) {
   return (
     <section style={{ maxWidth: 1100, margin: '0 auto 80px', padding: '0 32px' }}>

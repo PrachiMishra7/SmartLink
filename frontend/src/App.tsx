@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { HowItWorks, SecuritySection, ComparisonTable, AnalyticsPreview, FAQ } from './Landing';
+import { HowItWorks, SecuritySection, AnalyticsPreview, FAQ } from './Landing';
 import { DeepAnalyticsModal } from './DeepAnalyticsModal';
 import { AdminPanel } from './AdminPanel';
 
@@ -836,7 +836,6 @@ export default function App() {
           <HowItWorks />
           <AnalyticsPreview openAuth={() => openAuth('signup')} />
           <SecuritySection />
-          <ComparisonTable />
           <FAQ />
         </>
         )}
@@ -876,12 +875,32 @@ export default function App() {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none', color: useAi ? '#4ade80' : '#94a3b8', fontSize: 14, fontWeight: useAi ? 600 : 500 }}
-                  onClick={() => setUseAi(!useAi)}>
-                  <div style={{ width: 16, height: 16, borderRadius: 4, border: `1px solid ${useAi ? '#4ade80' : '#3d5270'}`, background: useAi ? '#22c55e' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {useAi && <Svg d="M5 13l4 4L19 7" size={12} color="white" />}
+                <div onClick={() => setUseAi(!useAi)} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 13, padding: '6px 14px', borderRadius: 20,
+                  transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'pointer',
+                  background: useAi ? 'linear-gradient(145deg, rgba(34,197,94,0.15), rgba(16,185,129,0.25))' : 'rgba(15,23,42,0.6)',
+                  border: `1px solid ${useAi ? 'rgba(34,197,94,.6)' : 'rgba(51,65,85,.5)'}`,
+                  boxShadow: useAi ? '0 0 20px rgba(34,197,94,.2), inset 0 0 10px rgba(34,197,94,.1)' : 'none',
+                }}>
+                  <div style={{
+                    width: 32, height: 18, borderRadius: 9, background: useAi ? '#22c55e' : '#334155', position: 'relative',
+                    transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)', display: 'flex', alignItems: 'center', padding: 2
+                  }}>
+                    <div style={{
+                      width: 14, height: 14, borderRadius: 7, background: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                      transform: `translateX(${useAi ? 14 : 0}px)`, transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                      {useAi && <Svg d="M5 13l4 4L19 7" size={8} color="#22c55e" />}
+                    </div>
                   </div>
-                  ✨ AI Semantic Slug
+                  <span style={{ 
+                    userSelect: 'none', 
+                    color: useAi ? '#4ade80' : '#cbd5e1', 
+                    fontWeight: useAi ? 700 : 500,
+                  }}>
+                    ✨ AI Semantic Slug
+                  </span>
                 </div>
                 
                 <button onClick={() => setShowAdv(!showAdv)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}

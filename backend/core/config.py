@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str | None = None
 
     class Config:
-        env_file = ".env"
+        import os
+        env_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
 
 settings = Settings()
