@@ -20,6 +20,153 @@ from backend.core.threats import is_malicious_url
 
 router = APIRouter()
 
+def _password_page_html(short_code: str, error: str | None = None) -> str:
+    error_block = ""
+    if error:
+        error_block = f"""
+        <div class="error">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>{error}</span>
+        </div>"""
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Password Required · SmartLink</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: #080e1a;
+      color: #cbd5e1;
+      -webkit-font-smoothing: antialiased;
+    }}
+    body::before {{
+      content: '';
+      position: fixed; inset: 0; z-index: -1;
+      background:
+        radial-gradient(900px 700px at 50% -20%, rgba(34,197,94,.07) 0%, transparent 65%),
+        radial-gradient(600px 600px at 100% 100%, rgba(59,130,246,.04) 0%, transparent 65%);
+    }}
+    .card {{
+      width: 100%; max-width: 420px;
+      background: rgba(12,21,38,.92);
+      border: 1px solid #1a2e46;
+      border-radius: 1.25rem;
+      padding: 2.25rem 2rem;
+      box-shadow: 0 40px 100px rgba(0,0,0,.6), 0 0 0 1px rgba(34,197,94,.06);
+      position: relative;
+      overflow: hidden;
+    }}
+    .card::before {{
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(34,197,94,.45), transparent);
+    }}
+    .logo {{
+      display: flex; align-items: center; justify-content: center; gap: .5rem;
+      margin-bottom: 1.75rem;
+    }}
+    .logo-icon {{
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, #22c55e, #15803d);
+      display: flex; align-items: center; justify-content: center;
+      color: #080e1a; box-shadow: 0 6px 20px rgba(34,197,94,.3);
+    }}
+    .logo-text {{ font-size: 1.125rem; font-weight: 900; color: #fff; letter-spacing: -.02em; }}
+    .lock {{
+      width: 56px; height: 56px; border-radius: 16px;
+      background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.2);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.25rem; color: #fbbf24;
+    }}
+    h1 {{
+      text-align: center; color: #fff; font-size: 1.375rem;
+      font-weight: 800; margin-bottom: .5rem; letter-spacing: -.02em;
+    }}
+    .sub {{
+      text-align: center; color: #64748b; font-size: .875rem;
+      line-height: 1.55; margin-bottom: 1.5rem;
+    }}
+    .error {{
+      display: flex; align-items: center; gap: .5rem;
+      padding: .75rem .875rem; border-radius: .75rem;
+      background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.22);
+      color: #fca5a5; font-size: .8125rem; margin-bottom: 1rem;
+    }}
+    label {{
+      display: block; color: #94a3b8; font-size: .75rem;
+      font-weight: 600; margin-bottom: .375rem;
+    }}
+    .input-wrap {{ position: relative; margin-bottom: 1.25rem; }}
+    .input-wrap svg {{
+      position: absolute; left: .875rem; top: 50%; transform: translateY(-50%);
+      color: #3d5270; pointer-events: none;
+    }}
+    input[type="password"] {{
+      width: 100%; padding: .75rem .875rem .75rem 2.5rem;
+      background: rgba(8,14,26,.7); border: 1px solid #1a2e46;
+      border-radius: .75rem; color: #fff; font-size: .875rem;
+      font-family: inherit; outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }}
+    input[type="password"]:focus {{
+      border-color: rgba(34,197,94,.45);
+      box-shadow: 0 0 0 3px rgba(34,197,94,.08);
+    }}
+    input::placeholder {{ color: #3d5270; }}
+    button[type="submit"] {{
+      width: 100%; padding: .875rem;
+      background: #22c55e; color: #080e1a;
+      border: none; border-radius: .75rem;
+      font-family: inherit; font-size: .9375rem; font-weight: 800;
+      cursor: pointer; transition: background .2s, transform .1s;
+      box-shadow: 0 4px 20px rgba(34,197,94,.3);
+    }}
+    button[type="submit"]:hover {{ background: #16a34a; }}
+    button[type="submit"]:active {{ transform: scale(.98); }}
+    .footer {{
+      margin-top: 1.25rem; text-align: center;
+      font-size: .75rem; color: #4b6a8a; font-weight: 600;
+    }}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <span class="logo-text">SmartLink</span>
+    </div>
+    <div class="lock">
+      <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+    </div>
+    <h1>Password Protected</h1>
+    <p class="sub">This link is secured. Enter the password shared with you to continue.</p>
+    {error_block}
+    <form action="/api/urls/unlock/{short_code}" method="post">
+      <label for="password">Password</label>
+      <div class="input-wrap">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        <input id="password" type="password" name="password" placeholder="Enter password" required autofocus/>
+      </div>
+      <button type="submit">Unlock Link</button>
+    </form>
+    <p class="footer">Secured by SmartLink</p>
+  </div>
+</body>
+</html>"""
+
 def fetch_geo_data(log_id: int, ip_address: str):
     if not ip_address or ip_address == "127.0.0.1" or ip_address == "::1":
         db = SessionLocal()
@@ -235,24 +382,7 @@ def redirect_to_url(short_code: str, request: Request, background_tasks: Backgro
 
     # Password Check
     if db_url.password:
-        html_content = f"""
-        <html>
-            <head><title>Password Required</title></head>
-            <body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #111827; color: white;">
-                <div style="background-color: #1F2937; padding: 2.5rem; border-radius: 1rem; text-align: center; border: 1px solid #374151; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
-                    <svg style="width: 3rem; height: 3rem; color: #60A5FA; margin: 0 auto 1rem auto;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                    <h2 style="margin-top: 0;">Password Protected Link</h2>
-                    <p style="color: #9CA3AF; margin-bottom: 1.5rem;">Please enter the password to continue</p>
-                    <form action="/api/urls/unlock/{short_code}" method="post">
-                        <input type="password" name="password" placeholder="Enter password" style="padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #4B5563; margin-bottom: 1rem; width: 100%; box-sizing: border-box; background-color: #374151; color: white;" required/>
-                        <br/>
-                        <button type="submit" style="background-color: #3B82F6; color: white; padding: 0.75rem 1rem; border: none; border-radius: 0.5rem; cursor: pointer; width: 100%; font-weight: bold;">Unlock Link</button>
-                    </form>
-                </div>
-            </body>
-        </html>
-        """
-        return HTMLResponse(content=html_content)
+        return HTMLResponse(content=_password_page_html(short_code))
     
     # Implement Analytics tracking
     user_agent = request.headers.get("user-agent", "")
@@ -292,7 +422,7 @@ def unlock_url(short_code: str, request: Request, password: str = Form(...), db:
         raise HTTPException(status_code=404, detail="URL not found")
         
     if not verify_password(password, db_url.password):
-        return HTMLResponse(content=f"<h1>Incorrect Password</h1><p>The password you entered is incorrect.</p><a href='/{short_code}'>Try again</a>", status_code=401)
+        return HTMLResponse(content=_password_page_html(short_code, "Incorrect password. Please try again."), status_code=401)
         
     # Log analytics
     user_agent = request.headers.get("user-agent", "")
@@ -313,7 +443,7 @@ def get_user_analytics(db: Session = Depends(get_db), current_user: User = Depen
     url_ids = [u.id for u in user_urls]
     
     if not url_ids:
-        return {"total_clicks": 0, "unique_visitors": 0, "devices": [], "browsers": [], "daily_clicks": [0]*7, "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], "geo": [], "referrers": []}
+        return {"total_clicks": 0, "total_links": 0, "unique_visitors": 0, "devices": [], "browsers": [], "daily_clicks": [0]*7, "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], "geo": [], "referrers": []}
         
     total_clicks = sum(u.click_count for u in user_urls)
     unique_visitors = db.query(func.count(func.distinct(ClickLog.ip_address))).filter(ClickLog.url_id.in_(url_ids)).scalar() or 0
@@ -353,6 +483,7 @@ def get_user_analytics(db: Session = Depends(get_db), current_user: User = Depen
 
     return {
         "total_clicks": total_clicks,
+        "total_links": len(user_urls),
         "unique_visitors": unique_visitors,
         "devices": devices,
         "browsers": browsers,
@@ -372,9 +503,20 @@ def scan_url(req: ScanRequest):
 
 @router.get("/platform/stats")
 def get_platform_stats(db: Session = Depends(get_db)):
+    from sqlalchemy import func
     links = db.query(URL).count()
     users = db.query(User).count()
-    return {"links_shortened": links, "active_users": users}
+    clicks = db.query(ClickLog).count()
+    unique_visitors = db.query(func.count(func.distinct(ClickLog.ip_address))).scalar() or 0
+    mobile_clicks = db.query(ClickLog).filter(ClickLog.device == 'Mobile').count()
+    mobile_traffic = (mobile_clicks / clicks * 100) if clicks > 0 else 0
+    return {
+        "links_shortened": links, 
+        "active_users": users, 
+        "clicks_tracked": clicks,
+        "unique_visitors": unique_visitors,
+        "mobile_traffic": round(mobile_traffic)
+    }
 
 @router.get("/platform/threats")
 def get_platform_threats(db: Session = Depends(get_db)):

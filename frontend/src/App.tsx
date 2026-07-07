@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { HowItWorks, SecuritySection, AnalyticsPreview, FAQ } from './Landing';
+import { HowItWorks, SecuritySection, AnalyticsPreview, FAQ, AnimatedCounter } from './Landing';
 import { DeepAnalyticsModal } from './DeepAnalyticsModal';
 import { AdminPanel } from './AdminPanel';
+import { LinksTable } from './LinksTable';
 
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://127.0.0.1:8000');
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://localhost:8000');
 
-/* ──────────────────────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    TINY HELPERS
-────────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const fmt = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n ?? 0);
 
 function Svg({ d, size = 20, color = 'currentColor', fill = false }:
@@ -31,9 +32,9 @@ function Spinner() {
   );
 }
 
-/* ──────────────────────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    TOAST
-────────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function Toast({ msg, ok, close }: { msg: string; ok: boolean; close: () => void }) {
   useEffect(() => { const t = setTimeout(close, 2800); return () => clearTimeout(t); }, [close]);
   return (
@@ -58,9 +59,9 @@ function Toast({ msg, ok, close }: { msg: string; ok: boolean; close: () => void
   );
 }
 
-/* ──────────────────────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    MODAL WRAPPER
-────────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function Modal({ close, children, wide = false }: { close: () => void; children: React.ReactNode; wide?: boolean }) {
   useEffect(() => {
     const fn = (e: KeyboardEvent) => e.key === 'Escape' && close();
@@ -91,24 +92,93 @@ function Modal({ close, children, wide = false }: { close: () => void; children:
   );
 }
 
-/* ──────────────────────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    AUTH MODAL
-────────────────────────────────────────────────────────────── */
-function AuthModal({ mode, close, switchMode, onSuccess }:
-  { mode: 'login' | 'signup'; close: () => void; switchMode: () => void; onSuccess: (u: any, urls: any[]) => void }) {
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
+function pwStrength(pw: string): { pct: number; label: string; color: string } {
+  if (!pw) return { pct: 0, label: '', color: '#1a2e46' };
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/\d/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  if (score <= 1) return { pct: 25, label: 'Weak', color: '#ef4444' };
+  if (score <= 2) return { pct: 50, label: 'Fair', color: '#fbbf24' };
+  if (score <= 3) return { pct: 75, label: 'Good', color: '#22c55e' };
+  return { pct: 100, label: 'Strong', color: '#4ade80' };
+}
+
+function AuthField({ label, type, placeholder, value, onChange, icon, extra, showToggle, onToggle, strength }: {
+  label: React.ReactNode; type: string; placeholder: string; value: string;
+  onChange: (v: string) => void; icon: string; extra?: React.ReactNode;
+  showToggle?: boolean; onToggle?: () => void;
+  strength?: { pct: number; label: string; color: string };
+}) {
+  return (
+    <div className="auth-field">
+      <label className="auth-label">{label}{extra}</label>
+      <div className="auth-input-wrap">
+        <span className="auth-input-icon"><Svg d={icon} size={16} /></span>
+        <input className="auth-input" type={type} placeholder={placeholder} required
+          value={value} onChange={e => onChange(e.target.value)}
+          autoComplete={type === 'password' ? 'current-password' : type === 'email' ? 'email' : 'name'} />
+        {showToggle !== undefined && (
+          <button type="button" className="auth-input-toggle" onClick={onToggle} tabIndex={-1} aria-label={showToggle ? 'Hide password' : 'Show password'}>
+            <Svg d={showToggle ? 'M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858 3.03a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21' : 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'} size={16} />
+          </button>
+        )}
+      </div>
+      {strength && value && strength.label && (
+        <div className="auth-strength">
+          <div className="auth-strength-bar">
+            <div className="auth-strength-fill" style={{ width: `${strength.pct}%`, background: strength.color }} />
+          </div>
+          <div className="auth-strength-label">{strength.label} password</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AuthModal({ mode, close, setMode, onSuccess, platformStats }:
+  { mode: 'login' | 'signup'; close: () => void; setMode: (m: 'login' | 'signup') => void; onSuccess: (u: any, urls: any[]) => void; platformStats?: { links_shortened: number; active_users: number } }) {
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
   const [name, setName] = useState('');
   const [err, setErr] = useState('');
+  const [success, setSuccess] = useState('');
   const [busy, setBusy] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+
+  const [formKey, setFormKey] = useState(0);
+
+  useEffect(() => {
+    const fn = (e: KeyboardEvent) => e.key === 'Escape' && close();
+    window.addEventListener('keydown', fn);
+    return () => window.removeEventListener('keydown', fn);
+  }, [close]);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/config`)
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => {});
+  }, []);
+
+  const goToMode = (m: 'login' | 'signup') => {
+    if (m !== mode) { setErr(''); setSuccess(''); setMode(m); setFormKey(k => k + 1); }
+  };
 
   const submit = async (e: React.FormEvent) => {
-    e.preventDefault(); setBusy(true); setErr('');
+    e.preventDefault(); setBusy(true); setErr(''); setSuccess('');
     try {
       if (mode === 'signup') {
         const r = await fetch(`${API_URL}/api/signup`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: pw, name }) });
         if (!r.ok) { const d = await r.json(); throw new Error(d.detail || 'Signup failed'); }
-        switchMode();
+        setSuccess('Account created! Sign in to continue.');
+        setMode('login');
+        setFormKey(k => k + 1);
       } else {
         const form = new URLSearchParams();
         form.append('username', email); form.append('password', pw);
@@ -126,74 +196,160 @@ function AuthModal({ mode, close, switchMode, onSuccess }:
     } catch (ex: any) { setErr(ex.message); } finally { setBusy(false); }
   };
 
+  const strength = mode === 'signup' ? pwStrength(pw) : undefined;
+
   return (
-    <Modal close={close}>
-      <div style={{ padding: '40px 32px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 48, borderRadius: 14, background: 'rgba(34,197,94,.1)', color: '#22c55e', marginBottom: 16 }}>
-            <Svg d="M19 4.5L10 16.5h7l-3 11L25 15.5h-7l1-11z" size={24} fill />
-          </div>
-          <h2 style={{ color: 'white', fontWeight: 800, fontSize: 24, marginBottom: 8 }}>
-            {mode === 'login' ? 'Welcome back' : 'Create an account'}
-          </h2>
-          <p style={{ color: '#64748b', fontSize: 14 }}>
-            {mode === 'login' ? 'Enter your details to access your dashboard.' : 'Start creating intelligent links for free.'}
-          </p>
-        </div>
-
-        {err && (
-          <div style={{ marginBottom: 20, padding: '12px 16px', borderRadius: 12, background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)', color: '#f87171', fontSize: 13, textAlign: 'center' }}>
-            {err}
-          </div>
-        )}
-
-        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {mode === 'signup' && (
-            <div>
-              <label style={{ display: 'block', color: '#94a3b8', fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Full Name</label>
-              <input style={{ width: '100%', background: 'rgba(8,14,26,.6)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'all .2s', boxSizing: 'border-box' }}
-                type="text" placeholder="John Doe" required value={name} onChange={e => setName(e.target.value)}
-                onFocus={e => { e.target.style.borderColor = 'rgba(34,197,94,.5)'; e.target.style.background = 'rgba(34,197,94,.02)'; }}
-                onBlur={e => { e.target.style.borderColor = '#1a2e46'; e.target.style.background = 'rgba(8,14,26,.6)'; }} />
-            </div>
-          )}
-          <div>
-            <label style={{ display: 'block', color: '#94a3b8', fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Email Address</label>
-            <input style={{ width: '100%', background: 'rgba(8,14,26,.6)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'all .2s', boxSizing: 'border-box' }}
-              type="email" placeholder="you@example.com" required value={email} onChange={e => setEmail(e.target.value)}
-              onFocus={e => { e.target.style.borderColor = 'rgba(34,197,94,.5)'; e.target.style.background = 'rgba(34,197,94,.02)'; }}
-              onBlur={e => { e.target.style.borderColor = '#1a2e46'; e.target.style.background = 'rgba(8,14,26,.6)'; }} />
-          </div>
-          <div>
-            <label style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
-              Password
-              {mode === 'login' && <span style={{ color: '#22c55e', cursor: 'pointer' }} onClick={() => alert('Forgot password flow coming soon!')}>Forgot?</span>}
-            </label>
-            <input style={{ width: '100%', background: 'rgba(8,14,26,.6)', border: '1px solid #1a2e46', borderRadius: 12, padding: '12px 16px', color: 'white', fontSize: 14, outline: 'none', transition: 'all .2s', boxSizing: 'border-box' }}
-              type="password" placeholder="••••••••" required value={pw} onChange={e => setPw(e.target.value)}
-              onFocus={e => { e.target.style.borderColor = 'rgba(34,197,94,.5)'; e.target.style.background = 'rgba(34,197,94,.02)'; }}
-              onBlur={e => { e.target.style.borderColor = '#1a2e46'; e.target.style.background = 'rgba(8,14,26,.6)'; }} />
-          </div>
-          
-          <button type="submit" disabled={busy} className="btn-primary" style={{ marginTop: 8, padding: '14px', fontSize: 15, width: '100%' }}>
-            {busy ? <Spinner /> : (mode === 'login' ? 'Sign In' : 'Create Account')}
-          </button>
-        </form>
-
-        <p style={{ marginTop: 24, textAlign: 'center', fontSize: 13, color: '#64748b' }}>
-          {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
-          <button type="button" onClick={switchMode} style={{ background: 'none', border: 'none', color: '#22c55e', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>
-            {mode === 'login' ? 'Sign up for free' : 'Sign in instead'}
-          </button>
-        </p>
+    <div className="auth-overlay" onClick={e => e.target === e.currentTarget && close()}>
+      <div className="auth-orbs" aria-hidden="true">
+        <div className="auth-orb auth-orb-1" />
+        <div className="auth-orb auth-orb-2" />
+        <div className="auth-orb auth-orb-3" />
       </div>
-    </Modal>
+
+      <div className="auth-wrap">
+        <div className="auth-card">
+          <button className="auth-close" onClick={close} aria-label="Close">
+            <Svg d="M6 18L18 6M6 6l12 12" size={16} />
+          </button>
+
+          <aside className="auth-showcase">
+            <div className="auth-showcase-grid" aria-hidden="true" />
+            <div className="auth-showcase-glow" aria-hidden="true" />
+
+            <div className="auth-showcase-top">
+              <div className="auth-showcase-logo">
+                <div className="auth-showcase-logo-icon">
+                  <Svg d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" size={22} fill />
+                </div>
+                <span className="auth-showcase-logo-text">SmartLink</span>
+              </div>
+              <h2 className="auth-showcase-headline">
+                Links that are<br /><em>smart, secure &amp; tracked</em>
+              </h2>
+              <p className="auth-showcase-sub">
+                AI-powered URL shortening with real-time analytics, malware scanning, and enterprise-grade security.
+              </p>
+              <div className="auth-stats">
+                <div className="auth-stat">
+                  <div className="auth-stat-val">{platformStats && platformStats.active_users >= 1000 ? `${(platformStats.active_users/1000).toFixed(1)}K+` : (platformStats?.active_users || '–')}</div>
+                  <div className="auth-stat-lbl">Users</div>
+                </div>
+                <div className="auth-stat">
+                  <div className="auth-stat-val">{platformStats && platformStats.links_shortened >= 1000 ? `${(platformStats.links_shortened/1000).toFixed(1)}K+` : (platformStats?.links_shortened || '–')}</div>
+                  <div className="auth-stat-lbl">Links</div>
+                </div>
+                <div className="auth-stat">
+                  <div className="auth-stat-val">99.9%</div>
+                  <div className="auth-stat-lbl">Uptime</div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="auth-preview">
+                <div className="auth-preview-bar">
+                  <div className="auth-preview-dot" /><div className="auth-preview-dot" /><div className="auth-preview-dot" />
+                </div>
+                <div className="auth-preview-row">
+                  <span className="auth-preview-link">smartlink.to/campaign</span>
+                  <span className="auth-preview-clicks">↑ 12.4k clicks</span>
+                </div>
+                <div className="auth-preview-row">
+                  <span className="auth-preview-link">smartlink.to/product</span>
+                  <span className="auth-preview-clicks">↑ 3.8k clicks</span>
+                </div>
+              </div>
+              <div className="auth-quote">
+                <p className="auth-quote-text">"Best smart URL tool I've used. The AI slugs are a game changer."</p>
+                <p className="auth-quote-author">— Alex R., Marketing Lead</p>
+              </div>
+            </div>
+          </aside>
+
+          <section className="auth-form-side">
+            <div className="auth-segment" role="tablist">
+              <div className={`auth-segment-indicator${mode === 'signup' ? ' signup' : ''}`} aria-hidden="true" />
+              <button type="button" role="tab" aria-selected={mode === 'login'}
+                className={`auth-segment-btn${mode === 'login' ? ' active' : ''}`}
+                onClick={() => goToMode('login')}>Sign In</button>
+              <button type="button" role="tab" aria-selected={mode === 'signup'}
+                className={`auth-segment-btn${mode === 'signup' ? ' active' : ''}`}
+                onClick={() => goToMode('signup')}>Create Account</button>
+            </div>
+
+            <div key={formKey} className="auth-form-body">
+              <h3 className="auth-form-heading">
+                {mode === 'login' ? 'Welcome back' : 'Get started free'}
+              </h3>
+              <p className="auth-form-desc">
+                {mode === 'login'
+                  ? 'Sign in to manage your links and view analytics.'
+                  : 'Create your account in seconds — no credit card needed.'}
+              </p>
+
+              {err && (
+                <div className="auth-error">
+                  <Svg d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" size={16} />
+                  <span>{err}</span>
+                </div>
+              )}
+              {success && (
+                <div className="auth-success">
+                  <Svg d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" size={16} />
+                  <span>{success}</span>
+                </div>
+              )}
+
+              <form onSubmit={submit}>
+                {mode === 'signup' && (
+                  <AuthField label="Full name" type="text" placeholder="John Doe" value={name} onChange={setName}
+                    icon="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                )}
+                <AuthField label="Email address" type="email" placeholder="you@example.com" value={email} onChange={setEmail}
+                  icon="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                <AuthField
+                  label="Password"
+                  extra={mode === 'login' ? (
+                    <button type="button" className="auth-label-link" onClick={() => alert('Password reset is coming soon.')}>Forgot?</button>
+                  ) : undefined}
+                  type={showPw ? 'text' : 'password'}
+                  placeholder={mode === 'signup' ? 'Min. 8 characters' : 'Enter your password'}
+                  value={pw} onChange={setPw}
+                  icon="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  showToggle={showPw} onToggle={() => setShowPw(v => !v)}
+                  strength={strength}
+                />
+
+                <button type="submit" disabled={busy} className="auth-submit">
+                  {busy ? <Spinner /> : (mode === 'login' ? 'Sign In →' : 'Create Account →')}
+                </button>
+              </form>
+
+
+
+              <div className="auth-trust">
+                <span className="auth-trust-item"><Svg d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" size={12} /> Encrypted</span>
+                <span className="auth-trust-item"><Svg d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" size={12} /> Secure</span>
+                <span className="auth-trust-item"><Svg d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" size={12} /> Free forever</span>
+              </div>
+            </div>
+
+            <p className="auth-footer">
+              {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+              <button type="button" className="auth-footer-link" onClick={() => goToMode(mode === 'login' ? 'signup' : 'login')}>
+                {mode === 'login' ? 'Sign up for free' : 'Sign in instead'}
+              </button>
+            </p>
+          </section>
+        </div>
+      </div>
+    </div>
   );
 }
 
-/* ──────────────────────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    ANALYTICS MODAL
-────────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function AnalyticsModal({ close }: { close: () => void }) {
   const [vis, setVis] = useState(false);
   const [data, setData] = useState<any>(null);
@@ -224,10 +380,9 @@ function AnalyticsModal({ close }: { close: () => void }) {
   const fmt = (n: number) => new Intl.NumberFormat('en-US', { notation: 'compact' }).format(n);
 
   const stats = [
-    { label: 'Total Clicks', value: fmt(data.total_clicks || 0), color: '#4ade80', bg: 'rgba(34,197,94,.08)', border: 'rgba(34,197,94,.2)' },
-    { label: 'Unique Visitors', value: fmt(data.unique_visitors || 0), color: '#60a5fa', bg: 'rgba(96,165,250,.08)', border: 'rgba(96,165,250,.2)' },
-    { label: 'Top Country', value: data.geo?.[0]?.name || 'N/A', color: '#c084fc', bg: 'rgba(192,132,252,.08)', border: 'rgba(192,132,252,.2)' },
-    { label: 'Avg CTR', value: data.total_clicks ? '100%' : '0%', color: '#fbbf24', bg: 'rgba(251,191,36,.08)', border: 'rgba(251,191,36,.2)' },
+    { label: 'Total Clicks', value: fmt(data.total_clicks || 0), color: '#4ade80', bg: 'rgba(34,197,94,.08)', border: 'rgba(34,197,94,.2)', shadow: '0 8px 30px rgba(34,197,94,.1)' },
+    { label: 'Unique Visitors', value: fmt(data.unique_visitors || 0), color: '#60a5fa', bg: 'rgba(96,165,250,.08)', border: 'rgba(96,165,250,.2)', shadow: '0 8px 30px rgba(96,165,250,.1)' },
+    { label: 'Avg Clicks / Link', value: data.total_links ? fmt(Math.round(data.total_clicks / data.total_links)) : '0', color: '#fbbf24', bg: 'rgba(251,191,36,.08)', border: 'rgba(251,191,36,.2)', shadow: '0 8px 30px rgba(251,191,36,.1)' },
   ];
   const geo = data.geo || [];
   const geoTotal = Math.max(1, geo.reduce((a: number, g: any) => a + g.count, 0));
@@ -239,8 +394,7 @@ function AnalyticsModal({ close }: { close: () => void }) {
   const browsers = data.browsers || [];
   const browsersTotal = Math.max(1, browsers.reduce((a: number, b: any) => a + b.count, 0));
 
-  const referrers = data.referrers || [];
-  const referrersTotal = Math.max(1, referrers.reduce((a: number, r: any) => a + r.count, 0));
+
 
   return (
     <Modal close={close} wide>
@@ -251,17 +405,19 @@ function AnalyticsModal({ close }: { close: () => void }) {
             <Svg d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" size={22} />
           </div>
           <div>
-            <div style={{ color: 'white', fontWeight: 800, fontSize: 20 }}>Deep Analytics</div>
+            <div style={{ color: 'white', fontWeight: 800, fontSize: 20 }}>Global Analytics</div>
             <div style={{ color: '#3d5270', fontSize: 12, marginTop: 2 }}>Real-time statistics for your short links</div>
           </div>
         </div>
 
-        {/* 4-stat grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
+        {/* 3-stat grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 24 }}>
           {stats.map(s => (
-            <div key={s.label} style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: 16, padding: '16px 14px' }}>
-              <div style={{ fontSize: 11, color: '#3d5270', fontWeight: 600, marginBottom: 6 }}>{s.label}</div>
-              <div style={{ fontSize: 26, fontWeight: 900, color: s.color }}>{s.value}</div>
+            <div key={s.label} style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: 16, padding: '20px 18px', boxShadow: s.shadow, transition: 'transform 0.2s, box-shadow 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = s.shadow.replace('0.1)', '0.2)'); }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = s.shadow; }}>
+              <div style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>{s.label}</div>
+              <div style={{ fontSize: 32, fontWeight: 900, color: s.color, textShadow: `0 0 20px ${s.color}40` }}>{s.value}</div>
             </div>
           ))}
         </div>
@@ -323,7 +479,7 @@ function AnalyticsModal({ close }: { close: () => void }) {
               ))}
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
               <div>
                 <div style={{ color: '#94a3b8', fontWeight: 700, fontSize: 13, marginBottom: 12 }}>Top Browsers</div>
                 {browsers.length === 0 && <div style={{ color: '#3d5270', fontSize: 12 }}>No browser data</div>}
@@ -336,19 +492,6 @@ function AnalyticsModal({ close }: { close: () => void }) {
                   </div>
                 ))}
               </div>
-              
-              <div>
-                <div style={{ color: '#94a3b8', fontWeight: 700, fontSize: 13, marginBottom: 12 }}>Top Referrers</div>
-                {referrers.length === 0 && <div style={{ color: '#3d5270', fontSize: 12 }}>No referrer data</div>}
-                {referrers.map((r: any) => (
-                  <div key={r.name} style={{ marginBottom: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
-                      <span style={{ color: '#94a3b8', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: 80 }}>{r.name}</span><span style={{ color: 'white', fontWeight: 700 }}>{Math.round((r.count/referrersTotal)*100)}%</span>
-                    </div>
-                    <div className="pbar"><div className="pbar-fill" style={{ width: vis ? `${(r.count/referrersTotal)*100}%` : '0%' }} /></div>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </div>
@@ -357,9 +500,9 @@ function AnalyticsModal({ close }: { close: () => void }) {
   );
 }
 
-/* ──────────────────────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    THREAT MODAL
-────────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function ThreatModal({ close }: { close: () => void }) {
   const [threats, setThreats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -395,26 +538,50 @@ function ThreatModal({ close }: { close: () => void }) {
             <div style={{ color: '#253850', fontSize: 13 }}>No malicious links have been intercepted yet.</div>
           </div>
         ) : (
-          <div style={{ display: 'grid', gap: 12 }}>
+          <div style={{ display: 'grid', gap: 16 }}>
             {threats.map(t => (
-              <div key={t.id} style={{ background: 'rgba(8,14,26,.6)', border: '1px solid #1a2e46', borderRadius: 12, padding: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                  <div style={{ color: '#ef4444', fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444', display: 'inline-block', animation: 'pulse 2s infinite' }} />
-                    Threat Score: {t.score}/100
+              <div key={t.id} style={{ 
+                background: 'linear-gradient(180deg, rgba(239,68,68,0.03), rgba(8,14,26,0.8))', 
+                border: '1px solid rgba(239,68,68,0.2)', 
+                borderRadius: 16, padding: '20px', position: 'relative', overflow: 'hidden',
+                boxShadow: '0 8px 32px rgba(239,68,68,0.05)',
+                transition: 'transform 0.2s, box-shadow 0.2s'
+              }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(239,68,68,0.1)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(239,68,68,0.05)'; }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, #ef4444, transparent)', opacity: 0.5 }} />
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(239,68,68,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
+                      <Svg d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" size={16} />
+                    </div>
+                    <div>
+                      <div style={{ color: '#ef4444', fontWeight: 800, fontSize: 13, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Threat Blocked</div>
+                      <div style={{ color: '#64748b', fontSize: 11, fontWeight: 600 }}>{new Date(t.timestamp).toLocaleString()}</div>
+                    </div>
                   </div>
-                  <div style={{ color: '#64748b', fontSize: 11 }}>{new Date(t.timestamp).toLocaleString()}</div>
+                  <div style={{ padding: '6px 12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 20, color: '#f87171', fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444', display: 'inline-block', animation: 'pulse 2s infinite' }} />
+                    Score: {t.score}/100
+                  </div>
                 </div>
-                <div style={{ color: 'white', fontSize: 13, wordBreak: 'break-all', marginBottom: 10, fontFamily: 'monospace', background: 'rgba(239,68,68,.05)', padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(239,68,68,.1)' }}>
+                
+                <div style={{ color: '#cbd5e1', fontSize: 14, wordBreak: 'break-all', marginBottom: 16, fontFamily: 'monospace', background: 'rgba(0,0,0,0.4)', padding: '12px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.05)', borderLeft: '3px solid #ef4444' }}>
                   {t.url}
                 </div>
+                
                 {t.reasons && t.reasons.length > 0 && (
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    {t.reasons.map((r: string, i: number) => (
-                      <span key={i} style={{ fontSize: 10, background: 'rgba(251,191,36,.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,.2)', padding: '2px 8px', borderRadius: 4 }}>
-                        {r}
-                      </span>
-                    ))}
+                  <div>
+                    <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.05em' }}>Detection Flags</div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {t.reasons.map((r: string, i: number) => (
+                        <span key={i} style={{ fontSize: 11, fontWeight: 600, background: 'rgba(251,191,36,.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,.3)', padding: '4px 10px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Svg d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" size={12} />
+                          {r}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -426,9 +593,9 @@ function ThreatModal({ close }: { close: () => void }) {
   );
 }
 
-/* ──────────────────────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    MAIN APP
-────────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export default function App() {
   const [rawUrl, setRawUrl] = useState('');
   const [busy, setBusy] = useState(false);
@@ -440,13 +607,14 @@ export default function App() {
   const [exp, setExp] = useState('');
   const [showAdv, setShowAdv] = useState(false);
   const [aiHighlight, setAiHighlight] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const [stats, setStats] = useState({ links_shortened: 0, active_users: 0 });
+  const [stats, setStats] = useState({ links_shortened: 0, active_users: 0, total_clicks: 0 });
 
   useEffect(() => {
     fetch(`${API_URL}/api/urls/platform/stats`)
       .then(r => r.json())
-      .then(d => setStats(d))
+      .then(d => setStats({ links_shortened: d.links_shortened || 0, active_users: d.active_users || 0, total_clicks: d.total_clicks || 0 }))
       .catch(() => {});
   }, []);
 
@@ -509,7 +677,7 @@ export default function App() {
       if (!r.ok) throw new Error('Bulk shortening failed');
       const res = await r.json();
       setUrls(prev => [...res, ...prev]);
-      notify(`Successfully shortened ${res.length} URLs! 🎉`);
+      notify(`Successfully shortened ${res.length} URLs! ðŸŽ‰`);
       setShowBulk(false);
       setBulkText('');
     } catch (e: any) { notify(e.message, false); } finally { setBulkBusy(false); }
@@ -522,14 +690,6 @@ export default function App() {
   const openAuth = (m: 'login' | 'signup' = 'login') => { setAuthMode(m); setShowAuth(true); };
 
   useEffect(() => {
-    // Capture Google OAuth token from URL
-    const params = new URLSearchParams(window.location.search);
-    const urlToken = params.get('token');
-    if (urlToken) {
-      localStorage.setItem('token', urlToken);
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-
     const tok = localStorage.getItem('token'); if (!tok) return;
     fetch(`${API_URL}/api/me`, { headers: { Authorization: `Bearer ${tok}` } })
       .then(r => r.json())
@@ -614,84 +774,168 @@ export default function App() {
     <>
       <div className="page-bg"><div className="grid-bg" /></div>
 
-      <header style={{ padding: '20px 32px', borderBottom: '1px solid rgba(26,46,70,.6)', position: 'sticky', top: 0, zIndex: 100, background: 'rgba(8,14,26,.6)', backdropFilter: 'blur(24px)' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 40 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => window.scrollTo(0, 0)}>
-              <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-                <rect width="32" height="32" rx="8" fill="#22c55e" />
-                <path d="M19 4.5L10 16.5h7l-3 11L25 15.5h-7l1-11z" fill="white" />
-              </svg>
-              <span style={{ color: 'white', fontWeight: 800, fontSize: 18, letterSpacing: '-.02em' }}>SmartLink</span>
-            </div>
-            
-            <nav style={{ display: 'flex', gap: 8 }} className="hide-mobile">
-              {[
-                { label: 'Home', action: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
-                { label: 'Features', action: () => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }) },
-                { label: 'How it Works', action: () => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' }) },
-                { label: 'Analytics', action: () => { if (user) setShowAnalytics(true); else openAuth('login'); } },
-                { label: 'Pricing', action: () => { /* optional notify or do nothing */ } },
-              ].map(n => (
-                <button key={n.label} onClick={n.action} style={{
-                  background: 'none', border: 'none', color: '#64748b', fontFamily: 'Inter,sans-serif',
-                  fontWeight: 600, fontSize: 14, padding: '8px 14px', borderRadius: 10, cursor: 'pointer',
-                  transition: 'all .15s',
-                }}
-                  onMouseEnter={e => { (e.target as HTMLElement).style.color = 'white'; (e.target as HTMLElement).style.background = 'rgba(255,255,255,.05)'; }}
-                  onMouseLeave={e => { (e.target as HTMLElement).style.color = '#64748b'; (e.target as HTMLElement).style.background = 'none'; }}>
-                  {n.label}
-                </button>
-              ))}
-            </nav>
+      <header style={{
+        padding: '0 32px',
+        borderBottom: '1px solid rgba(26,46,70,.6)',
+        position: 'sticky', top: 0, zIndex: 200,
+        background: 'rgba(8,14,26,.85)',
+        backdropFilter: 'blur(24px)',
+        height: 64,
+        display: 'flex', alignItems: 'center',
+      }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          {/* Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', flexShrink: 0 }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+              <rect width="32" height="32" rx="8" fill="#22c55e" />
+              <path d="M19 4.5L10 16.5h7l-3 11L25 15.5h-7l1-11z" fill="white" />
+            </svg>
+            <span style={{ color: 'white', fontWeight: 800, fontSize: 18, letterSpacing: '-.02em' }}>SmartLink</span>
           </div>
 
+          {/* Desktop Nav */}
+          <nav style={{ display: 'flex', gap: 6, padding: '6px', background: 'rgba(15,23,42,0.6)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 100, backdropFilter: 'blur(12px)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }} className="hide-mobile">
+            {[
+              { label: 'Home', action: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
+              { label: 'Features', action: () => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }) },
+              { label: 'Analytics', action: () => { if (user) setShowAnalytics(true); else openAuth('login'); } },
+              { label: 'Threat Feed', action: () => setShowThreat(true) },
+            ].map(n => (
+              <button key={n.label} onClick={n.action} style={{
+                background: 'transparent', border: 'none', color: '#94a3b8', fontFamily: 'Inter,sans-serif',
+                fontWeight: 600, fontSize: 14, padding: '8px 20px', borderRadius: 100, cursor: 'pointer',
+                transition: 'all 0.2s ease', whiteSpace: 'nowrap', position: 'relative'
+              }}
+                onMouseEnter={e => { (e.currentTarget).style.color = '#fff'; (e.currentTarget).style.background = 'rgba(255,255,255,0.1)'; (e.currentTarget).style.transform = 'translateY(-1px)'; }}
+                onMouseLeave={e => { (e.currentTarget).style.color = '#94a3b8'; (e.currentTarget).style.background = 'transparent'; (e.currentTarget).style.transform = 'translateY(0)'; }}>
+                {n.label}
+              </button>
+            ))}
+          </nav>
+
+          {/* Right Actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
             {user ? (
               <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#94a3b8', fontSize: 13, fontWeight: 500 }}>
-                  <div style={{ width: 30, height: 30, borderRadius: 9, background: 'linear-gradient(135deg,#22c55e,#15803d)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#080e1a', fontWeight: 900, fontSize: 13 }}>
-                    {user.name?.[0]?.toUpperCase()}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {user.role === 'admin' && (
+                    <button onClick={() => window.location.href = '/admin'} style={{
+                      background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.2)', color: '#fbbf24',
+                      fontFamily: 'Inter,sans-serif', fontWeight: 600, fontSize: 12, padding: '6px 12px',
+                      borderRadius: 8, cursor: 'pointer', transition: 'all .15s',
+                    }} className="hide-mobile">Admin</button>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px 5px 6px', borderRadius: 10, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.07)' }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg,#4ade80,#15803d)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#080e1a', fontWeight: 900, fontSize: 12, flexShrink: 0 }}>
+                      {user.name?.[0]?.toUpperCase()}
+                    </div>
+                    <span style={{ color: '#cbd5e1', fontSize: 13, fontWeight: 600, maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} className="hide-mobile">{user.name?.split(' ')[0]}</span>
                   </div>
-                  <span style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</span>
-                </div>
-                {user.role === 'admin' && (
-                  <button onClick={() => window.location.href = '/admin'} style={{ background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.2)', color: '#fbbf24', fontFamily: 'Inter,sans-serif', fontWeight: 600, fontSize: 13, padding: '7px 14px', borderRadius: 10, cursor: 'pointer', transition: 'all .15s', marginRight: 8 }}>
-                    Admin Panel
+                  <button onClick={logout} style={{
+                    background: 'rgba(239,68,68,.07)', border: '1px solid rgba(239,68,68,.15)', color: '#f87171',
+                    fontFamily: 'Inter,sans-serif', fontWeight: 600, fontSize: 13, padding: '6px 12px',
+                    borderRadius: 8, cursor: 'pointer', transition: 'all .15s',
+                  }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,.15)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,.07)'; }}>
+                    <Svg d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" size={15} />
                   </button>
-                )}
-                <button onClick={logout} style={{ background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)', color: '#f87171', fontFamily: 'Inter,sans-serif', fontWeight: 600, fontSize: 13, padding: '7px 14px', borderRadius: 10, cursor: 'pointer', transition: 'all .15s' }}>
-                  Log out
-                </button>
+                </div>
               </>
             ) : (
               <>
-                <button onClick={() => openAuth('login')} className="btn-outline" style={{ padding: '7px 16px', fontSize: 13 }}>Sign In</button>
-                <button onClick={() => openAuth('signup')} className="btn-primary" style={{ padding: '7px 18px', fontSize: 13, borderRadius: 10 }}>Get Started →</button>
+                <button onClick={() => openAuth('login')} className="btn-outline hide-mobile" style={{ padding: '7px 16px', fontSize: 13 }}>Sign In</button>
+                <button onClick={() => openAuth('signup')} className="btn-primary" style={{ padding: '8px 18px', fontSize: 13, borderRadius: 10, position: 'relative', zIndex: 100 }}>Get Started →</button>
               </>
             )}
+            {/* Hamburger — mobile only */}
+            <button onClick={() => setMobileMenuOpen(o => !o)} style={{
+              display: 'none', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.08)',
+              color: '#94a3b8', borderRadius: 8, padding: '8px', cursor: 'pointer', lineHeight: 1,
+            }} className="show-mobile">
+              <Svg d={mobileMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'} size={20} />
+            </button>
           </div>
         </div>
+
+        {/* Mobile Drawer */}
+        {mobileMenuOpen && (
+          <div style={{
+            position: 'fixed', top: 64, left: 0, right: 0, bottom: 0, zIndex: 190,
+            background: 'rgba(8,14,26,.97)', backdropFilter: 'blur(20px)',
+            padding: '24px 24px', display: 'flex', flexDirection: 'column', gap: 8,
+          }}>
+            {[
+              { label: 'ðŸ  Home', action: () => { window.scrollTo({ top: 0, behavior: 'smooth' }); setMobileMenuOpen(false); } },
+              { label: '⚡ Features', action: () => { document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); setMobileMenuOpen(false); } },
+              { label: 'ðŸ“– How it Works', action: () => { document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' }); setMobileMenuOpen(false); } },
+              { label: 'ðŸ“Š Analytics', action: () => { if (user) setShowAnalytics(true); else openAuth('login'); setMobileMenuOpen(false); } },
+              { label: 'ðŸ›¡ï¸ Threat Feed', action: () => { setShowThreat(true); setMobileMenuOpen(false); } },
+            ].map(n => (
+              <button key={n.label} onClick={n.action} style={{
+                background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)',
+                color: '#e2e8f0', fontFamily: 'Inter,sans-serif', fontWeight: 600, fontSize: 16,
+                padding: '14px 20px', borderRadius: 12, cursor: 'pointer', textAlign: 'left',
+                transition: 'all .15s',
+              }}>{n.label}</button>
+            ))}
+            <div style={{ flex: 1 }} />
+            {!user && (
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button onClick={() => { openAuth('login'); setMobileMenuOpen(false); }} className="btn-outline" style={{ flex: 1, padding: '12px' }}>Sign In</button>
+                <button onClick={() => { openAuth('signup'); setMobileMenuOpen(false); }} className="btn-primary" style={{ flex: 1, padding: '12px' }}>Sign Up</button>
+              </div>
+            )}
+            {user && (
+              <button onClick={() => { logout(); setMobileMenuOpen(false); }} style={{
+                background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)', color: '#f87171',
+                fontFamily: 'Inter,sans-serif', fontWeight: 600, fontSize: 15, padding: '12px',
+                borderRadius: 12, cursor: 'pointer',
+              }}>Sign Out</button>
+            )}
+          </div>
+        )}
       </header>
 
       <main style={{ flex: 1 }}>
         {!user && (
-          <>
-            <section style={{ maxWidth: 900, margin: '0 auto', padding: '80px 32px 64px', textAlign: 'center', position: 'relative' }} className="a-up">
+          <section style={{ maxWidth: 900, margin: '0 auto', padding: '80px 32px 64px', textAlign: 'center', position: 'relative' }} className="a-up">
               <div style={{ position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)', width: 600, height: 400, background: 'radial-gradient(ellipse at center, rgba(34,197,94,0.12) 0%, transparent 60%)', pointerEvents: 'none', zIndex: -1 }} />
               
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 32, marginBottom: 36 }}>
+              {/* Live platform stats */}
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 0, marginBottom: 36, background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.07)', borderRadius: 20, padding: '4px', backdropFilter: 'blur(10px)' }}>
                 {[
-                  { n: stats.links_shortened.toLocaleString(), l: 'Links Created' },
-                  { n: stats.active_users.toLocaleString(), l: 'Active Users' },
-                  { n: '99.9%', l: 'Safe Links' },
-                ].map(s => (
-                  <div key={s.l} style={{ textAlign: 'center' }}>
-                    <div style={{ color: 'white', fontWeight: 900, fontSize: 20 }}>{s.n}</div>
-                    <div style={{ color: '#64748b', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>{s.l}</div>
+                  { n: stats.links_shortened, l: 'Links Created', suffix: '', decimals: 0, color: '#4ade80' },
+                  { n: stats.active_users, l: 'Active Users', suffix: '', decimals: 0, color: '#60a5fa' },
+                  { n: 99.9, l: 'Uptime', suffix: '%', decimals: 1, color: '#c084fc' },
+                ].map((s, i) => (
+                  <div key={s.l} style={{ display: 'flex', alignItems: 'center' }}>
+                    {i > 0 && <div style={{ width: 1, height: 36, background: 'rgba(255,255,255,.08)', margin: '0 4px' }} />}
+                    <div style={{ textAlign: 'center', padding: '10px 24px' }}>
+                      <div style={{ color: s.color, fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 3, textShadow: `0 0 20px ${s.color}60` }}>
+                        <AnimatedCounter end={s.n} suffix={s.suffix} decimals={s.decimals} />
+                      </div>
+                      <div style={{ color: '#475569', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em' }}>{s.l}</div>
+                    </div>
                   </div>
                 ))}
               </div>
+
+              {/* Logged-in user personal stats */}
+              {user && (
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
+                  {[
+                    { icon: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101', label: 'Your Links', value: urls.length, color: '#4ade80' },
+                    { icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z', label: 'Total Clicks', value: totalClicks, color: '#60a5fa' },
+                  ].map(s => (
+                    <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 12, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.07)' }}>
+                      <Svg d={s.icon} size={14} color={s.color} />
+                      <span style={{ color: s.color, fontWeight: 800, fontSize: 15 }}>{s.value.toLocaleString()}</span>
+                      <span style={{ color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em' }}>{s.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="a-float" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 99, background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.2)', color: '#22c55e', fontSize: 12, fontWeight: 700, marginBottom: 36, letterSpacing: '.02em' }}>
                 <span style={{ position: 'relative', display: 'inline-flex', width: 8, height: 8 }}>
@@ -820,32 +1064,27 @@ export default function App() {
                     <h3 style={{ color: 'white', fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Unlock Analytics & AI Features</h3>
                     <p style={{ color: '#94a3b8', fontSize: 13 }}>Create a free account to track clicks, locations, and edit this link anytime.</p>
                   </div>
-                  <button onClick={() => openAuth('signup')} className="btn-primary" style={{ padding: '10px 20px', fontSize: 13, flexShrink: 0 }}>
+                  <button onClick={() => openAuth('signup')} className="btn-primary" style={{ padding: '10px 20px', fontSize: 13, flexShrink: 0, position: 'relative', zIndex: 50 }}>
                     Sign In to Unlock
                   </button>
                 </div>
               )}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 40 }}>
-              <button onClick={() => openAuth('signup')} className="btn-primary" style={{ padding: '14px 32px', fontSize: 16 }}>Get Started Free</button>
-            </div>
+            {!user && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 40, position: 'relative', zIndex: 50 }}>
+                <button onClick={() => openAuth('signup')} className="btn-primary" style={{ padding: '14px 32px', fontSize: 16, position: 'relative', zIndex: 50 }}>Get Started Free</button>
+              </div>
+            )}
           </section>
-
-          {/* New Landing Page Sections */}
-          <HowItWorks />
-          <AnalyticsPreview openAuth={() => openAuth('signup')} />
-          <SecuritySection />
-          <FAQ />
-        </>
         )}
 
         {user && (
           <section ref={dashRef} style={{ maxWidth: 1200, margin: '0 auto 80px', padding: '40px 32px' }} className="a-up">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
               <div>
-                <h2 style={{ color: 'white', fontWeight: 800, fontSize: 28 }}>Dashboard</h2>
-                <div style={{ color: '#94a3b8', fontSize: 15, marginTop: 4 }}>Welcome back, {user.name?.split(' ')[0]} 👋</div>
+                <h2 style={{ fontWeight: 800, fontSize: 32, background: 'linear-gradient(to right, #ffffff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>Dashboard</h2>
+                <div style={{ color: '#94a3b8', fontSize: 15, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>Welcome back, {user.name?.split(' ')[0]} <span role="img" aria-label="wave">👋</span></div>
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={() => setShowBulk(true)} className="btn-outline" style={{ padding: '8px 16px', fontSize: 13, borderColor: 'rgba(255,255,255,.1)' }}>
@@ -860,65 +1099,107 @@ export default function App() {
             </div>
 
             {/* Quick Create Bar */}
-            <div className="card" style={{ padding: 24, marginBottom: 40, border: '1px solid rgba(34,197,94,.2)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(8,14,26,.6)', border: '1px solid #1a2e46', borderRadius: 14, padding: '10px 16px', transition: 'border-color .2s' }}>
-                  <Svg d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" size={18} color="#94a3b8" />
+            <div style={{ padding: 32, marginBottom: 40, background: 'linear-gradient(145deg, rgba(15,23,42,0.6), rgba(8,14,26,0.9))', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, boxShadow: '0 24px 60px rgba(0,0,0,0.4)', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: -50, right: -50, width: 200, height: 200, background: 'radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 70%)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '14px 20px', transition: 'all .2s', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.2)' }}
+                  onFocus={e => e.currentTarget.style.borderColor = 'rgba(34,197,94,0.5)'}
+                  onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}>
+                  <Svg d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" size={20} color="#64748b" />
                   <input ref={inputRef} type="url" value={rawUrl} onChange={e => setRawUrl(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && shorten()}
                     placeholder="Paste a long URL to shorten..."
-                    style={{ background: 'transparent', border: 'none', color: 'white', fontSize: 15, outline: 'none', width: '100%' }} />
+                    style={{ background: 'transparent', border: 'none', color: 'white', fontSize: 16, outline: 'none', width: '100%', fontFamily: 'Inter, sans-serif' }} />
                 </div>
-                <button onClick={shorten} disabled={busy || !rawUrl.trim()} className="btn-primary" style={{ padding: '12px 24px', fontSize: 15, borderRadius: 12 }}>
+                <button onClick={shorten} disabled={busy || !rawUrl.trim()} className="btn-primary" style={{ padding: '14px 28px', fontSize: 16, borderRadius: 14, boxShadow: '0 8px 24px rgba(34,197,94,0.25)', border: '1px solid rgba(255,255,255,0.1)' }}>
                   {busy ? <Spinner /> : 'Shorten'}
                 </button>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
-                <div onClick={() => setUseAi(!useAi)} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 13, padding: '6px 14px', borderRadius: 20,
-                  transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'pointer',
-                  background: useAi ? 'linear-gradient(145deg, rgba(34,197,94,0.15), rgba(16,185,129,0.25))' : 'rgba(15,23,42,0.6)',
-                  border: `1px solid ${useAi ? 'rgba(34,197,94,.6)' : 'rgba(51,65,85,.5)'}`,
-                  boxShadow: useAi ? '0 0 20px rgba(34,197,94,.2), inset 0 0 10px rgba(34,197,94,.1)' : 'none',
-                }}>
-                  <div style={{
-                    width: 32, height: 18, borderRadius: 9, background: useAi ? '#22c55e' : '#334155', position: 'relative',
-                    transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)', display: 'flex', alignItems: 'center', padding: 2
-                  }}>
-                    <div style={{
-                      width: 14, height: 14, borderRadius: 7, background: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                      transform: `translateX(${useAi ? 14 : 0}px)`, transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                      {useAi && <Svg d="M5 13l4 4L19 7" size={8} color="#22c55e" />}
-                    </div>
-                  </div>
-                  <span style={{ 
-                    userSelect: 'none', 
-                    color: useAi ? '#4ade80' : '#cbd5e1', 
-                    fontWeight: useAi ? 700 : 500,
-                  }}>
-                    ✨ AI Semantic Slug
-                  </span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 12, background: 'rgba(0,0,0,0.2)', padding: '8px 12px', borderRadius: 16, border: '1px solid rgba(255,255,255,0.03)' }}>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ color: '#64748b', fontSize: 13 }}>{API_URL.replace(/https?:\/\//, '')}/</span>
+                  <input type="text" value={alias} onChange={e => { setAlias(e.target.value); if(e.target.value) setUseAi(false); }} placeholder="custom-alias" style={{ background: 'transparent', border: 'none', outline: 'none', color: useAi ? '#64748b' : 'white', fontSize: 13, width: '100%', maxWidth: 200, fontFamily: 'monospace' }} />
                 </div>
                 
-                <button onClick={() => setShowAdv(!showAdv)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'white')}
-                  onMouseLeave={e => (e.currentTarget.style.color = '#64748b')}>
-                  <Svg d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" size={14} />
-                  Advanced Options
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div onClick={() => { setUseAi(!useAi); if (!useAi) setAlias(''); }} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, padding: '4px 10px', borderRadius: 20,
+                    transition: 'all .3s ease', cursor: 'pointer',
+                    background: useAi ? 'linear-gradient(145deg, rgba(34,197,94,0.15), rgba(16,185,129,0.2))' : 'rgba(15,23,42,0.6)',
+                    border: `1px solid ${useAi ? 'rgba(34,197,94,.4)' : 'rgba(255,255,255,.05)'}`,
+                  }}>
+                    <div style={{ width: 24, height: 14, borderRadius: 7, background: useAi ? '#22c55e' : '#334155', position: 'relative', display: 'flex', alignItems: 'center', padding: 2 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: 5, background: 'white', transform: `translateX(${useAi ? 10 : 0}px)`, transition: 'all .3s ease' }} />
+                    </div>
+                    <span style={{ color: useAi ? '#4ade80' : '#64748b', fontWeight: 600 }}>AI Slug</span>
+                  </div>
+                  
+                  <button onClick={() => setShowAdv(!showAdv)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontWeight: 600 }}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'white')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#64748b')}>
+                    <Svg d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" size={14} />
+                    Options
+                  </button>
+                </div>
               </div>
 
               {showAdv && (
-                <div className="a-down" style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,.05)', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
-                  <input type="text" placeholder="Custom alias" value={alias} onChange={e => setAlias(e.target.value)}
-                    style={{ background: 'rgba(8,14,26,.6)', border: '1px solid #1a2e46', borderRadius: 10, padding: '10px 14px', color: 'white', fontSize: 13, outline: 'none' }} />
+                <div className="a-down" style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,.05)', display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12 }}>
                   <input type="password" placeholder="Password protect" value={pw} onChange={e => setPw(e.target.value)}
                     style={{ background: 'rgba(8,14,26,.6)', border: '1px solid #1a2e46', borderRadius: 10, padding: '10px 14px', color: 'white', fontSize: 13, outline: 'none' }} />
                   <input type="datetime-local" value={exp} onChange={e => setExp(e.target.value)}
                     style={{ background: 'rgba(8,14,26,.6)', border: '1px solid #1a2e46', borderRadius: 10, padding: '10px 14px', color: 'white', fontSize: 13, outline: 'none', colorScheme: 'dark' }} />
+                </div>
+              )}
+
+              {/* Quick Create Success Box */}
+              {shortUrl && (
+                <div className="a-down" style={{ marginTop: 24, padding: '24px', borderRadius: 16, background: 'rgba(34,197,94,0.04)', border: '1px solid rgba(34,197,94,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, width: 4, height: '100%', background: '#22c55e', boxShadow: '0 0 12px #22c55e' }} />
+                  <div style={{ minWidth: 0, flex: 1, paddingLeft: 12 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: '#4ade80', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Svg d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" size={16} />
+                      Link Generated Successfully
+                    </div>
+                    <a href={shortUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'white', fontWeight: 700, fontSize: 20, textDecoration: 'none', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'monospace', textShadow: '0 2px 10px rgba(255,255,255,0.2)' }}>
+                      {shortUrl.replace(/https?:\/\//, '')}
+                    </a>
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <button onClick={() => copy(shortUrl)} style={{
+                      flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '12px 18px', borderRadius: 12, fontSize: 14, fontWeight: 700, fontFamily: 'Inter,sans-serif', cursor: 'pointer', transition: 'all .2s',
+                      border: `1px solid ${copied ? 'rgba(34,197,94,.4)' : 'rgba(255,255,255,.08)'}`,
+                      background: copied ? 'rgba(34,197,94,.15)' : 'rgba(255,255,255,.04)',
+                      color: copied ? '#4ade80' : '#e2e8f0',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    }}>
+                      <Svg d={copied ? 'M5 13l4 4L19 7' : 'M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z'} size={16} />
+                      {copied ? 'Copied!' : 'Copy'}
+                    </button>
+                    <button onClick={() => setQrUrl(shortUrl)} style={{
+                      flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '12px 18px', borderRadius: 12, fontSize: 14, fontWeight: 700, fontFamily: 'Inter,sans-serif', cursor: 'pointer', transition: 'all .2s',
+                      border: '1px solid rgba(96,165,250,.2)', background: 'rgba(96,165,250,.1)', color: '#93c5fd', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(96,165,250,.2)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(96,165,250,.1)'}>
+                      <Svg d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" size={16} />
+                      QR
+                    </button>
+                    <button onClick={() => {
+                       // Find the URL object from urls list to open analytics
+                       const u = urls.find(x => `${API_URL}/${x.short_code}` === shortUrl);
+                       if (u) setDeepAnalyticsUrl(u);
+                    }} style={{
+                      flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '12px 18px', borderRadius: 12, fontSize: 14, fontWeight: 700, fontFamily: 'Inter,sans-serif', cursor: 'pointer', transition: 'all .2s',
+                      border: '1px solid rgba(192,132,252,.2)', background: 'rgba(192,132,252,.1)', color: '#d8b4fe', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(192,132,252,.2)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(192,132,252,.1)'}>
+                      <Svg d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" size={16} />
+                      Stats
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -943,87 +1224,37 @@ export default function App() {
 
               <div className="eyebrow" style={{ marginTop: 40, marginBottom: 16 }}>Your Links</div>
               <div className="card" style={{ overflow: 'hidden' }}>
-                {urls.length > 0 ? (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table className="dash-table">
-                      <thead>
-                        <tr>
-                          <th>Short Link</th>
-                          <th>Original URL</th>
-                          <th style={{ textAlign: 'center' }}>Clicks</th>
-                          <th>Status</th>
-                          <th style={{ textAlign: 'center' }}>Copy</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {urls.map((u, i) => (
-                          <tr key={u.id || i}>
-                            <td>
-                              <a href={`${API_URL}/${u.short_code}`} target="_blank" rel="noopener noreferrer"
-                                style={{ color: '#22c55e', fontWeight: 700, textDecoration: 'none', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}
-                                onMouseEnter={e => (e.currentTarget.style.color = '#4ade80')}
-                                onMouseLeave={e => (e.currentTarget.style.color = '#22c55e')}>
-                                {API_URL.replace(/https?:\/\//, '')}/{u.short_code}
-                                <Svg d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" size={13} color="#3d5270" />
-                              </a>
-                            </td>
-                            <td>
-                              <span style={{ color: '#3d5270', display: 'block', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={u.original_url}>
-                                {u.original_url}
-                              </span>
-                            </td>
-                            <td style={{ textAlign: 'center' }}>
-                              <span className="click-badge">{u.click_count ?? 0}</span>
-                            </td>
-                            <td>
-                              <div style={{ display: 'flex', gap: 6 }}>
-                                {u.password && <span style={{ fontSize: 11, fontWeight: 700, color: '#fbbf24', background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.2)', padding: '2px 8px', borderRadius: 6 }}>🔒 Protected</span>}
-                                {u.expiry_date && <span style={{ fontSize: 11, fontWeight: 700, color: '#f87171', background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)', padding: '2px 8px', borderRadius: 6 }}>⏱ Expires</span>}
-                                {!u.password && !u.expiry_date && <span style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.2)', padding: '2px 8px', borderRadius: 6 }}>✓ Active</span>}
-                              </div>
-                            </td>
-                            <td style={{ textAlign: 'center' }}>
-                              <div style={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
-                                <button onClick={() => { navigator.clipboard.writeText(`${API_URL}/${u.short_code}`); notify('Copied!'); }} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 6 }} title="Copy">
-                                  <Svg d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" size={18} />
-                                </button>
-                                <button onClick={() => setQrUrl(`${API_URL}/${u.short_code}`)} style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', padding: 6 }} title="QR Code">
-                                  <Svg d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6zm3-1v1h-1v-1h1zm-1 2v1h-1v-1h1z" size={18} />
-                                </button>
-                                <button onClick={() => updateUrl(u.id, { is_active: !u.is_active })} style={{ background: 'none', border: 'none', color: u.is_active ? '#22c55e' : '#f87171', cursor: 'pointer', padding: 6 }} title={u.is_active ? 'Disable Link' : 'Enable Link'}>
-                                  <Svg d="M18.364 5.636l-1.414 1.414a7 7 0 11-9.9 0L5.636 5.636a9 9 0 1012.728 0z M12 2v9" size={18} />
-                                </button>
-                                <button onClick={() => setEditingUrl(u)} style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', padding: 6 }} title="Notes">
-                                  <Svg d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" size={18} />
-                                </button>
-                                <button onClick={() => setDeepAnalyticsUrl(u)} style={{ background: 'none', border: 'none', color: '#c084fc', cursor: 'pointer', padding: 6 }} title="Deep Analytics">
-                                  <Svg d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" size={18} />
-                                </button>
-                                <button onClick={() => deleteUrl(u.id)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: 6 }} title="Delete">
-                                  <Svg d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" size={18} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div style={{ padding: '60px 32px', textAlign: 'center' }}>
-                    <div style={{ width: 56, height: 56, borderRadius: 18, background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.15)', color: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-                      <Svg d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" size={26} />
-                    </div>
-                    <div style={{ color: '#64748b', fontWeight: 600, marginBottom: 6 }}>No links yet</div>
-                    <div style={{ color: '#253850', fontSize: 13 }}>Paste a URL above to create your first intelligent link!</div>
-                  </div>
-                )}
-              </div>
-          </section>
-        )}
+              {/* Search + Sort toolbar */}
+              {urls.length > 0 && (() => {
+                // Pull search and sort state from URL component — use a local function trick
+                return null;
+              })()}
 
-        {/* ══════════════════ FEATURES ══════════════════ */}
-        {!user && (
+              {urls.length > 0 ? (
+                <LinksTable
+                  urls={urls}
+                  API_URL={API_URL}
+                  onCopy={(url: string) => { navigator.clipboard.writeText(url); notify('Copied!'); }}
+                  onQr={(url: string) => setQrUrl(url)}
+                  onAnalytics={(u: any) => setDeepAnalyticsUrl(u)}
+                  onToggle={(u: any) => updateUrl(u.id, { is_active: !u.is_active })}
+                  onEdit={(u: any) => setEditingUrl(u)}
+                  onDelete={(id: number) => deleteUrl(id)}
+                />
+              ) : (
+                <div style={{ padding: '80px 32px', textAlign: 'center' }}>
+                  <div style={{ width: 72, height: 72, borderRadius: 22, background: 'rgba(34,197,94,.07)', border: '1px solid rgba(34,197,94,.12)', color: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                    <Svg d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" size={32} />
+                  </div>
+                  <div style={{ color: 'white', fontWeight: 700, fontSize: 18, marginBottom: 8 }}>No links yet</div>
+                  <div style={{ color: '#475569', fontSize: 14 }}>Paste a URL above to create your first intelligent short link!</div>
+                </div>
+              )}
+            </div>
+        </section>
+      )}
+
+        {/* ══════════════════ FEATURES ══════════════════ */}
         <section id="features" style={{ maxWidth: 1100, margin: '0 auto 80px', padding: '0 32px' }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <div className="eyebrow" style={{ marginBottom: 12 }}>Platform Features</div>
@@ -1051,11 +1282,10 @@ export default function App() {
             ))}
           </div>
         </section>
-        )}
 
 
 
-        {/* ══════════════════ CTA BANNER ══════════════════ */}
+        {/* ══════════════════ CTA BANNER ══════════════════ */}
         {!user && (
           <section style={{ maxWidth: 900, margin: '0 auto 80px', padding: '0 32px' }}>
             <div className="card" style={{ padding: '64px 48px', textAlign: 'center', position: 'relative', overflow: 'hidden', borderColor: 'rgba(34,197,94,.15)' }}>
@@ -1074,9 +1304,19 @@ export default function App() {
             </div>
           </section>
         )}
+
+        {!user && (
+          <>
+            {/* New Landing Page Sections */}
+            <HowItWorks />
+            <AnalyticsPreview openAuth={() => openAuth('signup')} isLoggedIn={false} />
+            <SecuritySection />
+            <FAQ />
+          </>
+        )}
       </main>
 
-      {/* ══════════════════ FOOTER ══════════════════ */}
+      {/* ══════════════════ FOOTER ══════════════════ */}
       <footer style={{ borderTop: '1px solid rgba(26,46,70,.6)', padding: '64px 32px 32px', marginTop: 'auto', background: 'rgba(8,14,26,.6)', position: 'relative', zIndex: 10 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 48, marginBottom: 64 }}>
@@ -1136,25 +1376,52 @@ export default function App() {
         </div>
       </footer>
 
-      {/* ══════════════════ MODALS ══════════════════ */}
+      {/* ══════════════════ MODALS ══════════════════ */}
       {showAuth && (
         <AuthModal mode={authMode} close={() => setShowAuth(false)}
-          switchMode={() => setAuthMode(m => m === 'login' ? 'signup' : 'login')}
-          onSuccess={(u, us) => { setUser(u); setUrls(us); notify(`Welcome, ${u.name}! 🎉`); }} />
+          setMode={setAuthMode}
+          platformStats={stats}
+          onSuccess={(u, us) => { setUser(u); setUrls(us); notify(`Welcome, ${u.name}! ðŸŽ‰`); }} />
       )}
       {qrUrl && (
         <Modal close={() => setQrUrl('')}>
-          <div style={{ padding: 32, textAlign: 'center' }}>
-            <h3 style={{ color: 'white', marginBottom: 20 }}>Link QR Code</h3>
-            <div style={{ background: 'white', padding: 16, borderRadius: 12, display: 'inline-block', marginBottom: 24 }}>
-              <img src={`${API_URL}/api/urls/qr?data=${encodeURIComponent(qrUrl)}`} alt="QR Code" width={200} height={200} style={{ display: 'block' }} />
+          <div style={{ padding: '36px 32px', textAlign: 'center' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 24 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(96,165,250,.1)', border: '1px solid rgba(96,165,250,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Svg d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" size={18} color="#60a5fa" />
+              </div>
+              <div>
+                <div style={{ color: 'white', fontWeight: 800, fontSize: 17 }}>QR Code</div>
+                <div style={{ color: '#475569', fontSize: 12 }}>Scan to open this link</div>
+              </div>
             </div>
-            <a href={`${API_URL}/api/urls/qr?data=${encodeURIComponent(qrUrl)}`} download="qrcode.png" target="_blank" rel="noreferrer" className="btn-primary" style={{ display: 'block', textDecoration: 'none' }}>
-              Download High-Res PNG
-            </a>
+
+            {/* URL label */}
+            <div style={{ marginBottom: 20, padding: '8px 14px', background: 'rgba(8,14,26,.8)', border: '1px solid rgba(255,255,255,.07)', borderRadius: 10, fontSize: 12, color: '#4ade80', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+              {qrUrl.replace(/https?:\/\//, '')}
+            </div>
+
+            {/* QR image */}
+            <div style={{ background: 'white', padding: 18, borderRadius: 20, display: 'inline-block', marginBottom: 24, boxShadow: '0 0 0 1px rgba(34,197,94,.2), 0 20px 60px rgba(0,0,0,.5)' }}>
+              <img src={`${API_URL}/api/urls/qr?data=${encodeURIComponent(qrUrl)}`} alt="QR Code" width={200} height={200} style={{ display: 'block', borderRadius: 4 }} />
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={() => { navigator.clipboard.writeText(qrUrl); notify('Link copied!'); }} className="btn-outline" style={{ flex: 1, padding: '12px', fontSize: 14 }}>
+                <Svg d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" size={16} />
+                Copy Link
+              </button>
+              <a href={`${API_URL}/api/urls/qr?data=${encodeURIComponent(qrUrl)}`} download="smartlink-qr.png" target="_blank" rel="noreferrer" className="btn-primary" style={{ flex: 1, padding: '12px', fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <Svg d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" size={16} color="#080e1a" />
+                Download PNG
+              </a>
+            </div>
           </div>
         </Modal>
       )}
+
 
       {editingUrl && (
         <Modal close={() => setEditingUrl(null)}>
@@ -1199,3 +1466,11 @@ export default function App() {
     </>
   );
 }
+// force hmr
+// force hmr 2
+// force hmr 3
+// force hmr 5
+// force hmr 6
+// force hmr 7
+// force hmr 8
+// force hmr 9
